@@ -3,7 +3,6 @@ local vehicleComponents = {}
 local drivingDistance = {}
 local tunedVehicles = {}
 local nitrousVehicles = {}
-local nitrousVehicles = {}
 
 -- Functions
 
@@ -359,57 +358,3 @@ QBCore.Commands.Add('fix', 'Repair your vehicle (Admin Only)', {}, false, functi
     end
     TriggerClientEvent('qb-mechanicjob:client:fixEverything', source)
 end, 'admin')
--- Dán đoạn code này vào cuối file qb-mechanicjob/server/main.lua
-
--- Tải dữ liệu NOS khi người chơi vào xe
-QBCore.Functions.CreateCallback('qb-mechanicjob:server:GetNosData', function(source, cb)
-    cb(nitrousVehicles)
-end)
-
--- Sự kiện được gọi khi người chơi cài đặt NOS
-RegisterNetEvent('qb-mechanicjob:server:installNitrous', function(plate)
-    if not plate then return end
-    nitrousVehicles[plate] = { hasnitro = 1, level = 100 }
-    TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nitrousVehicles[plate])
-    MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ?, hasnitro = ? WHERE plate = ?', {100, 1, plate})
-end)
-
--- Cập nhật mức NOS
-RegisterNetEvent('qb-mechanicjob:server:updateNitrousLevel', function(plate, level)
-    if nitrousVehicles[plate] then
-        nitrousVehicles[plate].level = level
-        TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nitrousVehicles[plate])
-    end
-end)
-
--- Gỡ bỏ NOS
-RegisterNetEvent('qb-mechanicjob:server:removeNitrous', function(plate)
-    if not plate then return end
-    nitrousVehicles[plate] = nil
-    TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nil)
-    MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ?, hasnitro = ? WHERE plate = ?', {0, 0, plate})
-end)
-
--- Lưu mức NOS khi người chơi rời xe
-RegisterNetEvent('qb-mechanicjob:server:saveNitrousOnLeave', function(plate, level)
-    if nitrousVehicles[plate] then
-        MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ? WHERE plate = ?', {level, plate})
-    end
-end)
-
--- Đồng bộ hiệu ứng lửa và khói
-RegisterNetEvent('qb-mechanicjob:server:syncNitrousEffects', function(netId, effectType, toggle)
-    TriggerClientEvent('qb-mechanicjob:client:playNitrousEffects', -1, netId, effectType, toggle)
-end)
-
--- Tải dữ liệu NOS từ database khi script khởi động
-AddEventHandler('onResourceStart', function(resource)
-    if resource == GetCurrentResourceName() then
-        local result = MySQL.Sync.fetchAll('SELECT plate, noslevel, hasnitro FROM player_vehicles WHERE hasnitro = 1')
-        if result and result[1] then
-            for _, v in pairs(result) do
-                nitrousVehicles[v.plate] = { hasnitro = v.hasnitro, level = v.noslevel }
-            end
-        end
-    end
-end)
