@@ -3,6 +3,7 @@ local vehicleComponents = {}
 local drivingDistance = {}
 local tunedVehicles = {}
 local nitrousVehicles = {}
+local nitrousVehicles = {}
 
 -- Functions
 
@@ -119,6 +120,7 @@ RegisterNetEvent('qb-mechanicjob:server:sprayVehicleCustom', function(netId, sec
     local paintTypeIndex = GetPaintTypeIndex(type)
     FreezeEntityPosition(vehicle, true)
     StartParticles(vehicleCoords, netId, color)
+    TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, true)
     local r, g, b
     if section == 'primary' then
         local _, colorSecondary = GetVehicleColours(vehicle)
@@ -132,6 +134,7 @@ RegisterNetEvent('qb-mechanicjob:server:sprayVehicleCustom', function(netId, sec
     local currentColor = { r = r, g = g, b = b }
     TransitionVehicleColor(vehicle, section, currentColor, color, Config.PaintTime * 1000)
     StopParticles()
+    TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, false)
     FreezeEntityPosition(vehicle, false)
 end)
 
@@ -142,40 +145,48 @@ RegisterNetEvent('qb-mechanicjob:server:sprayVehicle', function(netId, primary, 
 
     if colors.primary then
         StartParticles(vehicleCoords, netId, colors.primary)
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, true)
         Wait(Config.PaintTime * 1000)
         -- local _, colorSecondary = GetVehicleColours(vehicle)
         -- ClearVehicleCustomPrimaryColour(vehicle) -- does not exist yet
         -- SetVehicleColours(vehicle, tonumber(primary), colorSecondary)
         TriggerClientEvent('qb-mechanicjob:client:vehicleSetColors', -1, netId, 'primary', primary)
         StopParticles()
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, false)
     end
 
     if colors.secondary then
         StartParticles(vehicleCoords, netId, colors.secondary)
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, true)
         Wait(Config.PaintTime * 1000)
         -- local colorPrimary, _ = GetVehicleColours(vehicle)
         -- ClearVehicleCustomSecondaryColour(vehicle) -- does not exist yet
         -- SetVehicleColours(vehicle, colorPrimary, tonumber(secondary))
         TriggerClientEvent('qb-mechanicjob:client:vehicleSetColors', -1, netId, 'secondary', secondary)
         StopParticles()
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, false)
     end
 
     if colors.pearlescent then
         StartParticles(vehicleCoords, netId, colors.pearlescent)
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, true)
         Wait(Config.PaintTime * 1000)
         -- local pearlescentColor, wheelColor = GetVehicleExtraColours(vehicle) -- does not exist yet
         -- SetVehicleExtraColours(vehicle, tonumber(pearlescent) or pearlescentColor, tonumber(wheel) or wheelColor) -- does not exist yet
         TriggerClientEvent('qb-mechanicjob:client:vehicleSetColors', -1, netId, 'pearlescent', pearlescent)
         StopParticles()
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, false)
     end
 
     if colors.wheel then
         StartParticles(vehicleCoords, netId, colors.wheel)
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, true)
         Wait(Config.PaintTime * 1000)
         -- local pearlescentColor, wheelColor = GetVehicleExtraColours(vehicle) -- does not exist yet
         -- SetVehicleExtraColours(vehicle, tonumber(pearlescent) or pearlescentColor, tonumber(wheel) or wheelColor) -- does not exist yet
         TriggerClientEvent('qb-mechanicjob:client:vehicleSetColors', -1, netId, 'wheel', wheel)
         StopParticles()
+        TriggerClientEvent('qb-mechanicjob:client:toggleSonSpray', -1, false)
     end
 
     FreezeEntityPosition(vehicle, false)
@@ -348,3 +359,57 @@ QBCore.Commands.Add('fix', 'Repair your vehicle (Admin Only)', {}, false, functi
     end
     TriggerClientEvent('qb-mechanicjob:client:fixEverything', source)
 end, 'admin')
+-- Dán đoạn code này vào cuối file qb-mechanicjob/server/main.lua
+
+-- Tải dữ liệu NOS khi người chơi vào xe
+QBCore.Functions.CreateCallback('qb-mechanicjob:server:GetNosData', function(source, cb)
+    cb(nitrousVehicles)
+end)
+
+-- Sự kiện được gọi khi người chơi cài đặt NOS
+RegisterNetEvent('qb-mechanicjob:server:installNitrous', function(plate)
+    if not plate then return end
+    nitrousVehicles[plate] = { hasnitro = 1, level = 100 }
+    TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nitrousVehicles[plate])
+    MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ?, hasnitro = ? WHERE plate = ?', {100, 1, plate})
+end)
+
+-- Cập nhật mức NOS
+RegisterNetEvent('qb-mechanicjob:server:updateNitrousLevel', function(plate, level)
+    if nitrousVehicles[plate] then
+        nitrousVehicles[plate].level = level
+        TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nitrousVehicles[plate])
+    end
+end)
+
+-- Gỡ bỏ NOS
+RegisterNetEvent('qb-mechanicjob:server:removeNitrous', function(plate)
+    if not plate then return end
+    nitrousVehicles[plate] = nil
+    TriggerClientEvent('qb-mechanicjob:client:syncNitrousState', -1, plate, nil)
+    MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ?, hasnitro = ? WHERE plate = ?', {0, 0, plate})
+end)
+
+-- Lưu mức NOS khi người chơi rời xe
+RegisterNetEvent('qb-mechanicjob:server:saveNitrousOnLeave', function(plate, level)
+    if nitrousVehicles[plate] then
+        MySQL.Async.execute('UPDATE player_vehicles SET noslevel = ? WHERE plate = ?', {level, plate})
+    end
+end)
+
+-- Đồng bộ hiệu ứng lửa và khói
+RegisterNetEvent('qb-mechanicjob:server:syncNitrousEffects', function(netId, effectType, toggle)
+    TriggerClientEvent('qb-mechanicjob:client:playNitrousEffects', -1, netId, effectType, toggle)
+end)
+
+-- Tải dữ liệu NOS từ database khi script khởi động
+AddEventHandler('onResourceStart', function(resource)
+    if resource == GetCurrentResourceName() then
+        local result = MySQL.Sync.fetchAll('SELECT plate, noslevel, hasnitro FROM player_vehicles WHERE hasnitro = 1')
+        if result and result[1] then
+            for _, v in pairs(result) do
+                nitrousVehicles[v.plate] = { hasnitro = v.hasnitro, level = v.noslevel }
+            end
+        end
+    end
+end)

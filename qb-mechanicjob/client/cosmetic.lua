@@ -723,3 +723,12 @@ CreateThread(function()
         RequestNamedPtfxAsset('core')
     end
 end)
+RegisterNetEvent('qb-mechanicjob:client:toggleSonSpray', function(toggle)
+    if toggle then
+        -- Gọi hàm từ tài nguyên 'son' để bật hiệu ứng
+        exports['son']:StartSonSprayEffect()
+    else
+        -- Gọi hàm từ tài nguyên 'son' để tắt hiệu ứng
+        exports['son']:StopSonSprayEffect()
+    end
+end)
