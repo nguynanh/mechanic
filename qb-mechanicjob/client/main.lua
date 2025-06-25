@@ -1,3 +1,8 @@
+function trim(value)
+    if not value then return nil end
+    return (string.gsub(value, '^%s*(.-)%s*$', '%1'))
+end
+
 PlayerData = {}
 
 -- Handlers
@@ -59,6 +64,49 @@ function GetClosestWheel(vehicle)
         end
     end
     return closestWheelIndex
+end
+
+function triggerNotify(title, message, type, src)
+    -- Ví dụ cho qb-core notify mặc định
+    if not src then
+        TriggerEvent("QBCore:Notify", message, "primary")
+    else
+        TriggerClientEvent("QBCore:Notify", src, message, "primary")
+    end
+end
+
+-- Hàm kiểm tra người chơi có trong xe hay không
+function inCar()
+    local inCar = false
+    if IsPedSittingInAnyVehicle(PlayerPedId()) then
+        triggerNotify(nil, "Không thể làm điều này khi ở trong xe", "error")
+        inCar = false
+    else
+        inCar = true
+    end
+    return inCar
+end
+
+function outCar()
+    local outCar = false
+    if not IsPedSittingInAnyVehicle(PlayerPedId()) then
+        triggerNotify(nil, "Không thể làm điều này khi ở ngoài xe", "error")
+        outCar = false
+    else
+        outCar = true
+    end
+    return outCar
+end
+
+-- Hàm ghi log (tùy chọn, có thể bỏ qua nếu không cần)
+function qblog(text)
+    local Player = QBCore.Functions.GetPlayerData()
+    TriggerServerEvent('qb-log:server:CreateLog', 'vehicleupgrades', GetCurrentResourceName() .. " - "..Player.charinfo.firstname.." "..Player.charinfo.lastname.."("..Player.source..") ["..Player.citizenid.."]", 'blue', text)
+end
+
+-- Hàm thêm/xóa vật phẩm
+function toggleItem(give, item, amount)
+    TriggerServerEvent("jim-mechanic:server:toggleItem", give, item, amount)
 end
 
 -- Local Functions

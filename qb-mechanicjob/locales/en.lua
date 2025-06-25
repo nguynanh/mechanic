@@ -1,4 +1,7 @@
 local Translations = {
+    -- =============================================
+    -- BẢN DỊCH GỐC TỪ QB-MECHANICJOB
+    -- =============================================
     success = {
         tuned = 'Vehicle tuned',
         installed = '%s installed',
@@ -84,6 +87,52 @@ local Translations = {
         repair_tire = 'Repairing Tire',
         cleaning = 'Cleaning Vehicle',
         tuner_chip = 'Connecting Tuner',
+    },
+
+    -- =============================================
+    -- BẢN DỊCH TÍCH HỢP TỪ JIM-MECHANIC
+    -- =============================================
+    common = {
+		owned = "Vehicle isn't owned, cannot modify",
+		close = "Close",
+		ret = "Return",
+		stock = "Stock",
+		current = "Currently Installed",
+		noOptions = "No options available for this item",
+		installing = "Installing ",
+		amountoption = "Amount of Options: ",
+		already = " already installed",
+		menuinstalled = " Options] Installed: ",
+		nearwheel = "You need to move closer to a wheel",
+		nearengine = "You need to move closer to the engine"
+	},
+	nos = {
+		notinstalled = "Turbo isn't installed",
+		installing = "Success! Installing NOS",
+		installed = "Success! NOS Installed",
+		failed = "NOS installation failed!",
+		removing = "Removing NOS Bottle",
+		removed = "NOS Bottle Removed",
+		remfail = "Failed to remove NOS bottle",
+		nosColour = "NOS Purge Colour",
+		boostmode = "Boost Mode",
+		purgemode = "Purge Mode",
+		boost = "Boost Power: ",
+		spray = "Spray Strength: ",
+	},
+    paintrgb = { -- << BỔ SUNG PHẦN BỊ THIẾU
+		select = "Selection:",
+		finish = "Finish Select:",
+		error = "Hex Code input needs to be 6 characters",
+		customheader = "Custom HEX and RGB",
+		chrome = "Chrome",
+		hex = "HEX Picker",
+		rgb = "RGB Picker",
+	},
+    check = { -- << BỔ SUNG PHẦN BỊ THIẾU
+        tireinst = "Installed",
+        label57 = "Do you want to unload the Nitrous?",
+		label58 = "Nitrous:",
     }
 }
 

@@ -92,6 +92,10 @@ QBCore.Functions.CreateCallback('qb-mechanicjob:server:hasPermission', function(
     end
 end)
 
+QBCore.Functions.CreateUseableItem("nos", function(source, item)
+    print('--- SERVER: Su kien su dung vat pham "nos" da duoc kich hoat cho source: ' .. source) -- Dòng debug phía server
+    TriggerClientEvent("jim-mechanic:client:applyNOS", source)
+end)
 -- Events
 
 RegisterNetEvent('qb-mechanicjob:server:stash', function(data)
@@ -258,6 +262,17 @@ RegisterNetEvent('qb-mechanicjob:server:removeItem', function(part, amount)
     TriggerClientEvent('ps-inventory:client:ItemBox', src, QBCore.Shared.Items[part], 'remove')
 end)
 
+RegisterNetEvent('jim-mechanic:server:toggleItem', function(give, item, amount)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if give then
+        Player.Functions.AddItem(item, amount or 1)
+    else
+        Player.Functions.RemoveItem(item, amount or 1)
+    end
+    TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[item], give and "add" or "remove", amount or 1)
+end)
+--]]
 -- Items
 
 local performanceParts = {
@@ -358,3 +373,17 @@ QBCore.Commands.Add('fix', 'Repair your vehicle (Admin Only)', {}, false, functi
     end
     TriggerClientEvent('qb-mechanicjob:client:fixEverything', source)
 end, 'admin')
+-- Xử lý thêm/bớt vật phẩm từ yêu cầu của client
+RegisterNetEvent('jim-mechanic:server:toggleItem', function(give, item, amount)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+
+    local itemAmount = amount or 1
+
+    if give then
+        Player.Functions.AddItem(item, itemAmount)
+    else
+        Player.Functions.RemoveItem(item, itemAmount)
+    end
+end)
