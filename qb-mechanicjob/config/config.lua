@@ -1,18 +1,16 @@
-Loc = {}
-
 Config = {}
 
 ---------------------------------
--- CẤU HÌNH TỪ QB-MECHANICJOB --
+-- CẤU HÌNH CHUNG
 ---------------------------------
-Config.RequireJob = false
 Config.FuelResource = 'LegacyFuel'
+Config.Debug = false
 
-Config.PaintTime = 5
-Config.ColorFavorites = false
-
-Config.NitrousBoost = 1.8
-Config.NitrousUsage = 0.1
+---------------------------------
+-- CẤU HÌNH TÍNH NĂNG TỪ QB-MECHANICJOB GỐC
+---------------------------------
+Config.RequireJob = false -- Đặt thành true nếu chỉ job mechanic mới dùng được các chức năng của qb-mechanicjob
+Config.PaintTime = 5 -- Thời gian (giây) cho mỗi lớp sơn
 
 Config.UseDistance = true
 Config.UseDistanceDamage = true
@@ -48,17 +46,16 @@ Config.Shops = {
         stash = vector3(-199.58, -1314.65, 31.08),
         paint = vector3(-202.42, -1322.16, 31.29),
         vehicles = {
-            withdraw = vector3(0, 0, 0),
-            spawn = vector4(-370.51, -107.88, 38.35, 72.56),
+            withdraw = vector3(-187.25, -1310.55, 31.3),
+            spawn = vector4(-182.74, -1317.61, 30.63, 357.23),
             list = { 'flatbed', 'towtruck', 'minivan', 'blista' }
         },
     },
 }
 
 ---------------------------------
--- CẤU HÌNH TỪ JIM-MECHANIC --
+-- CẤU HÌNH TÍCH HỢP TỪ JIM-MECHANIC
 ---------------------------------
-Config.Lan = "en" -- Ngôn ngữ sử dụng
 
 -- Cấu hình NOS
 Config.NosRefillCharge = 1000
@@ -72,22 +69,35 @@ Config.boostExplode = true
 Config.skillcheck = "ps-ui" -- Các lựa chọn: "qb-lock", "ps-ui", "qb-skillbar", hoặc false để tắt
 Config.explosiveFail = true -- Đặt thành true để bật nguy cơ nổ khi thất bại
 Config.explosiveFailJob = false -- Nếu false, thợ máy sẽ không gây nổ
+
 -- Hiệu ứng NOS
 Config.EnableFlame = true
 Config.EnableTrails = true
 Config.EnableScreen = true
--- Cấu hình cho trạm nạp NOS
+
+-- Cấu hình trạm nạp NOS
 Config.NosRefillStation = {
     coords = vector3(-228.15, -1334.16, 30.89),
     blip = { colour = 75, id = 569, scale = 0.8 },
+     polyzone = { -- <-- THÊM MỤC NÀY
+            vector2(-189.07, -1311.31),
+            vector2(-188.36, -1343.46),
+            vector2(-217.37, -1343.54),
+            vector2(-244.44, -1342.33),
+            vector2(-244.07, -1312.06)
+       },
     target = {
-        item = "noscan", -- Vật phẩm yêu cầu để nạp
+        item = "noscan",
         icon = "fas fa-gas-pump",
         label = "Nạp lại bình NOS"
     }
 }
 
--- Skill Check
-Config.skillcheck = "false"
-Config.explosiveFail = true
-Config.explosiveFailJob = false
+-- Cấu hình Preview
+Config.PreviewPhone = true
+Config.PreviewJob = false
+Config.PreviewLocation = false
+Config.PhoneMail = "qb" -- "qb", "gks", "qs"
+Config.DiscordPreview = false
+Config.DiscordDefault = ""
+Config.DiscordColour = 16753920

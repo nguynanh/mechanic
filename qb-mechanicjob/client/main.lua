@@ -1,18 +1,14 @@
-function trim(value)
-    if not value then return nil end
-    return (string.gsub(value, '^%s*(.-)%s*$', '%1'))
-end
-
-PlayerData = {}
+local QBCore = exports['qb-core']:GetCoreObject()
+local PlayerData = {}
+local currentShopBlips = {}
 
 -- Handlers
-
-AddEventHandler('OnResourceStart', function(resourceName)
+AddEventHandler('onResourceStart', function(resourceName)
     if (GetCurrentResourceName() ~= resourceName) then return end
     PlayerData = QBCore.Functions.GetPlayerData()
 end)
 
-AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     PlayerData = QBCore.Functions.GetPlayerData()
 end)
 
@@ -24,99 +20,15 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     PlayerData = {}
 end)
 
--- Global Functions
-
-function Trim(plate)
-    return (string.gsub(plate, '^%s*(.-)%s*$', '%1'))
-end
-
-function ToggleHood(vehicle)
-    if GetVehicleDoorAngleRatio(vehicle, 4) > 0.0 then
-        SetVehicleDoorShut(vehicle, 4, false)
-    else
-        SetVehicleDoorOpen(vehicle, 4, false, false)
-    end
-end
-
-function IsNearBone(vehicle, bone)
-    local playerCoords = GetEntityCoords(PlayerPedId())
-    local vehicleBoneIndex = GetEntityBoneIndexByName(vehicle, bone)
-    if vehicleBoneIndex ~= -1 then
-        local bonePos = GetWorldPositionOfEntityBone(vehicle, vehicleBoneIndex)
-        if #(playerCoords - bonePos) <= 1.5 then
-            return true
-        end
-    end
-    return false
-end
-
-function GetClosestWheel(vehicle)
-    local playerCoords = GetEntityCoords(PlayerPedId())
-    local closestWheelIndex
-    for wheelIndex, wheelBone in pairs(Config.WheelBones) do
-        local wheelBoneIndex = GetEntityBoneIndexByName(vehicle, wheelBone)
-        if wheelBoneIndex ~= -1 then
-            local wheelPos = GetWorldPositionOfEntityBone(vehicle, wheelBoneIndex)
-            if #(playerCoords - wheelPos) <= 1.5 then
-                closestWheelIndex = wheelIndex
-                break
-            end
-        end
-    end
-    return closestWheelIndex
-end
-
-function triggerNotify(title, message, type, src)
-    -- Ví dụ cho qb-core notify mặc định
-    if not src then
-        TriggerEvent("QBCore:Notify", message, "primary")
-    else
-        TriggerClientEvent("QBCore:Notify", src, message, "primary")
-    end
-end
-
--- Hàm kiểm tra người chơi có trong xe hay không
-function inCar()
-    local inCar = false
-    if IsPedSittingInAnyVehicle(PlayerPedId()) then
-        triggerNotify(nil, "Không thể làm điều này khi ở trong xe", "error")
-        inCar = false
-    else
-        inCar = true
-    end
-    return inCar
-end
-
-function outCar()
-    local outCar = false
-    if not IsPedSittingInAnyVehicle(PlayerPedId()) then
-        triggerNotify(nil, "Không thể làm điều này khi ở ngoài xe", "error")
-        outCar = false
-    else
-        outCar = true
-    end
-    return outCar
-end
-
--- Hàm ghi log (tùy chọn, có thể bỏ qua nếu không cần)
-function qblog(text)
-    local Player = QBCore.Functions.GetPlayerData()
-    TriggerServerEvent('qb-log:server:CreateLog', 'vehicleupgrades', GetCurrentResourceName() .. " - "..Player.charinfo.firstname.." "..Player.charinfo.lastname.."("..Player.source..") ["..Player.citizenid.."]", 'blue', text)
-end
-
--- Hàm thêm/xóa vật phẩm
-function toggleItem(give, item, amount)
-    TriggerServerEvent("jim-mechanic:server:toggleItem", give, item, amount)
-end
-
 -- Local Functions
-
 local function SpawnListVehicle(model, spawnPoint)
     QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
         local veh = NetToVeh(netId)
         SetVehicleNumberPlateText(veh, 'MECH' .. tostring(math.random(1000, 9999)))
         SetEntityHeading(veh, spawnPoint.w)
-        exports[Config.FuelResource]:SetFuel(veh, 100.0)
+        if exports[Config.FuelResource] then
+            exports[Config.FuelResource]:SetFuel(veh, 100.0)
+        end
         TriggerEvent('vehiclekeys:client:SetOwner', QBCore.Functions.GetPlate(veh))
         SetVehicleEngineOn(veh, true, true, false)
     end, model, spawnPoint, true)
@@ -124,136 +36,110 @@ end
 
 local function VehicleList(shop)
     local vehicleMenu = { { header = Lang:t('menu.vehicle_list'), isMenuHeader = true } }
+
+    if not Config.Shops[shop] or not Config.Shops[shop].vehicles or not Config.Shops[shop].vehicles.list then
+        print('^1[ERROR] Khong tim thay danh sach xe cho garage: ' .. shop .. ' trong config.lua^7')
+        QBCore.Functions.Notify("Garage này chưa được cấu hình danh sách xe!", "error")
+        return
+    end
+
     local list = Config.Shops[shop].vehicles.list
     for i = 1, #list do
-        local v = list[i]
+        local vehicleData = QBCore.Shared.Vehicles[list[i]]
+        local vehicleName = (vehicleData and vehicleData.name) or list[i]
         vehicleMenu[#vehicleMenu + 1] = {
-            header = QBCore.Shared.Vehicles[v].name,
+            header = vehicleName,
             params = {
                 event = 'qb-mechanicjob:client:SpawnListVehicle',
                 args = {
-                    spawnName = v,
+                    spawnName = list[i],
                     location = Config.Shops[shop].vehicles.spawn
                 }
             }
         }
     end
+
     vehicleMenu[#vehicleMenu + 1] = {
         header = Lang:t('menu.close'),
-        txt = '',
-        params = {
-            event = 'qb-menu:client:closeMenu'
-        }
-
+        params = { event = 'qb-menu:client:closeMenu' }
     }
     exports['qb-menu']:openMenu(vehicleMenu)
 end
 
 -- Events
-
 RegisterNetEvent('qb-mechanicjob:client:SpawnListVehicle', function(data)
-    local vehicleSpawnName = data.spawnName
-    local spawnPoint = data.location
-    SpawnListVehicle(vehicleSpawnName, spawnPoint)
+    SpawnListVehicle(data.spawnName, data.location)
 end)
 
 -- Main Thread
-
 CreateThread(function()
+    if not Config.Shops or type(Config.Shops) ~= 'table' then return end
     for k, v in pairs(Config.Shops) do
-        if v.showBlip then
-            local blip = AddBlipForCoord(v.blipCoords)
-            SetBlipSprite(blip, v.blipSprite)
-            SetBlipDisplay(blip, 4)
-            SetBlipScale(blip, 0.6)
-            SetBlipColour(blip, v.blipColor)
-            SetBlipAsShortRange(blip, true)
-            BeginTextCommandSetBlipName('STRING')
-            AddTextComponentString(v.shopLabel)
-            EndTextCommandSetBlipName(blip)
+        if v and type(v) == 'table' then
+
+           if v.polyzone then -- Giả sử bạn thêm một mục 'polyzone' vào config cho mỗi shop
+               local shopZone = PolyZone:Create(v.polyzone, { name = k, debugPoly = Config.Debug })
+               shopZone:onPlayerInOut(function(isPointInside)
+                  if isPointInside then
+                     TriggerEvent("qb-mechanicjob:client:SetInsideLocation", true)
+                  else
+                      TriggerEvent("qb-mechanicjob:client:SetInsideLocation", false)
+                  end
+               end)
+          end
+            -- Create Blips
+            if v.showBlip and v.blipCoords and not currentShopBlips[k] then
+                local blip = AddBlipForCoord(v.blipCoords)
+                SetBlipSprite(blip, v.blipSprite)
+                SetBlipDisplay(blip, 4)
+                SetBlipScale(blip, 0.6)
+                SetBlipColour(blip, v.blipColor)
+                SetBlipAsShortRange(blip, true)
+                BeginTextCommandSetBlipName('STRING')
+                AddTextComponentString(v.shopLabel)
+                EndTextCommandSetBlipName(blip)
+                currentShopBlips[k] = blip
+            end
+
+            -- Create Target Zones (with safety checks)
+            if v.duty then
+                exports['qb-target']:AddCircleZone(k .. '_duty', v.duty, 0.5, { name = k .. '_duty', useZ = true }, {
+                    options = { { event = 'QBCore:ToggleDuty', type = 'server', label = Lang:t('target.duty'), icon = 'fas fa-user-clock', job = v.managed and k or nil } },
+                    distance = 2.0
+                })
+            end
+
+            if v.stash then
+                exports['qb-target']:AddCircleZone(k .. '_stash', v.stash, 0.5, { name = k .. '_stash', useZ = true }, {
+                    options = { { event = 'qb-mechanicjob:server:stash', type = 'server', data = { job = k }, label = Lang:t('target.stash'), icon = 'fas fa-box-open', job = v.managed and k or nil } },
+                    distance = 2.0
+                })
+            end
+
+            if v.paint then
+                exports['qb-target']:AddCircleZone(k .. '_paintbooth', v.paint, 2.5, { name = k .. '_paintbooth', useZ = true }, {
+                    options = { { label = Lang:t('target.paint'), icon = 'fas fa-fill-drip', job = v.managed and k or nil, action = function() PaintCategories() end } },
+                    distance = 2.5
+                })
+            end
+
+            if v.vehicles and v.vehicles.withdraw then
+                exports['qb-target']:AddCircleZone(k .. '_spawner', v.vehicles.withdraw, 1.5, { name = k .. '_spawner', useZ = true }, {
+                    options = {
+                        {
+                            label = Lang:t('target.withdraw'), icon = 'fas fa-car', job = v.managed and k or nil,
+                            canInteract = function() return GetVehiclePedIsUsing(PlayerPedId()) == 0 end,
+                            action = function() VehicleList(k) end
+                        },
+                        {
+                            label = Lang:t('target.deposit'), icon = 'fas fa-car', job = k,
+                            canInteract = function() return GetVehiclePedIsUsing(PlayerPedId()) ~= 0 end,
+                            action = function() DeleteEntity(GetVehiclePedIsUsing(PlayerPedId())) end
+                        }
+                    },
+                    distance = 2.5
+                })
+            end
         end
-
-        exports['qb-target']:AddCircleZone(k .. '_duty', v.duty, 0.5, {
-            name = k .. '_duty',
-            debugPoly = false,
-            useZ = true
-        }, {
-            options = { {
-                type = 'server',
-                event = 'QBCore:ToggleDuty',
-                label = Lang:t('target.duty'),
-                icon = 'fas fa-user-clock',
-                job = v.managed and k or nil
-            } },
-            distance = 2.0
-        })
-
-        exports['qb-target']:AddCircleZone(k .. '_stash', v.stash, 0.5, {
-            name = k .. '_stash',
-            debugPoly = false,
-            useZ = true
-        }, {
-            options = { {
-                label = Lang:t('target.stash'),
-                icon = 'fas fa-box-open',
-                job = v.managed and k or nil,
-                type = 'server',
-                event = 'qb-mechanicjob:server:stash',
-            } },
-            distance = 2.0
-        })
-
-        exports['qb-target']:AddCircleZone(k .. '_paintbooth', v.paint, 0.5, {
-            name = k .. '_paintbooth',
-            debugPoly = false,
-            useZ = true
-        }, {
-            options = { {
-                label = Lang:t('target.paint'),
-                icon = 'fas fa-fill-drip',
-                job = v.managed and k or nil,
-                action = function()
-                    PaintCategories() -- cosmetics.lua
-                end
-            } },
-            distance = 2.0
-        })
-
-        exports['qb-target']:AddCircleZone(k .. '_spawner', v.vehicles.withdraw, 0.5, {
-            name = k .. '_spawner',
-            debugPoly = false,
-            useZ = true
-        }, {
-            options = {
-                {
-                    label = Lang:t('target.withdraw'),
-                    icon = 'fas fa-car',
-                    job = v.managed and k or nil,
-                    canInteract = function()
-                        local inVehicle = GetVehiclePedIsUsing(PlayerPedId())
-                        if inVehicle ~= 0 then return false end
-                        return true
-                    end,
-                    action = function()
-                        VehicleList(k)
-                    end
-                },
-                {
-                    label = Lang:t('target.deposit'),
-                    icon = 'fas fa-car',
-                    job = k,
-                    canInteract = function()
-                        local inVehicle = GetVehiclePedIsUsing(PlayerPedId())
-                        if inVehicle == 0 then return false end
-                        return true
-                    end,
-                    action = function()
-                        SetEntityAsMissionEntity(GetVehiclePedIsUsing(PlayerPedId()), true, true)
-                        DeleteVehicle(GetVehiclePedIsUsing(PlayerPedId()))
-                    end
-                }
-            },
-            distance = 5.0
-        })
     end
 end)

@@ -1,3 +1,15 @@
+-- =================================================================
+-- TỆP DRIVINGDISTANCE.LUA ĐÃ ĐƯỢC SỬA LỖI
+-- =================================================================
+
+-- [SỬA LỖI] Thêm hàm Trim vào đầu tệp để đảm bảo nó luôn tồn tại
+local function Trim(str)
+    if str then
+        return str:match("^%s*(.-)%s*$")
+    end
+    return nil
+end
+
 local vehicle, plate
 local vehicleComponents = {}
 local drivingDistance = {}
@@ -121,7 +133,8 @@ AddEventHandler('gameEventTriggered', function(event)
         vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
         local originalPlate = GetVehicleNumberPlateText(vehicle)
         if not originalPlate then return end
-        plate = Trim(originalPlate)
+        plate = Trim(originalPlate) -- Bây giờ hàm Trim đã tồn tại
+        if not plate then return end
         local vehicleClass = GetVehicleClass(vehicle)
         if Config.IgnoreClasses[vehicleClass] then return end
         TrackDistance()

@@ -93,8 +93,7 @@ QBCore.Functions.CreateCallback('qb-mechanicjob:server:hasPermission', function(
 end)
 
 QBCore.Functions.CreateUseableItem("nos", function(source, item)
-    print('--- SERVER: Su kien su dung vat pham "nos" da duoc kich hoat cho source: ' .. source) -- Dòng debug phía server
-    TriggerClientEvent("jim-mechanic:client:applyNOS", source)
+    TriggerClientEvent("qb-mechanicjob:client:applyNOS", source)
 end)
 -- Events
 
@@ -262,7 +261,7 @@ RegisterNetEvent('qb-mechanicjob:server:removeItem', function(part, amount)
     TriggerClientEvent('ps-inventory:client:ItemBox', src, QBCore.Shared.Items[part], 'remove')
 end)
 
-RegisterNetEvent('jim-mechanic:server:toggleItem', function(give, item, amount)
+RegisterNetEvent('qb-mechanicjob:server:toggleItem', function(give, item, amount)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if give then
@@ -374,7 +373,7 @@ QBCore.Commands.Add('fix', 'Repair your vehicle (Admin Only)', {}, false, functi
     TriggerClientEvent('qb-mechanicjob:client:fixEverything', source)
 end, 'admin')
 -- Xử lý thêm/bớt vật phẩm từ yêu cầu của client
-RegisterNetEvent('jim-mechanic:server:toggleItem', function(give, item, amount)
+RegisterNetEvent('qb-mechanicjob:server:toggleItem', function(give, item, amount)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -387,3 +386,101 @@ RegisterNetEvent('jim-mechanic:server:toggleItem', function(give, item, amount)
         Player.Functions.RemoveItem(item, itemAmount)
     end
 end)
+
+--Preview xem truoc
+local Previewing = {}
+
+function sendToDiscord(color, name, message, footer, htmllist, info)
+	local embed = { { ["color"] = color, ["thumbnail"] = { ["url"] = info.thumb }, ["title"] = "**".. name .."**", ["description"] = message, ["footer"] = { ["text"] = footer }, ["fields"] = htmllist, } }
+	--local htmllink = "https://discord.com/api/webhooks/988881990042402926/mty6aD6MBNV1FVz8l9JY4DB-IQjUt6x016J_Iwex8fU91Q05XqlKZSsYoJqkAfON-350"
+	PerformHttpRequest(info.htmllink, function(err, text, headers) end, 'POST', json.encode({username = info.shopName:sub(4), embeds = embed}),	{ ['Content-Type'] = 'application/json' })
+end
+RegisterNetEvent("qb-mechanicjob:server:discordLog", function(info)
+	local src = source
+	local Player = QBCore.Functions.GetPlayer(src)
+	local htmllist = {}
+	local count = 0
+	for i = 1, #info["modlist"] do
+		htmllist[#htmllist+1] = {
+			["name"] = info["modlist"][i]["item"],
+			["value"]= info["modlist"][i]["type"],
+			["inline"] = true
+		}
+		count = count +1
+		if count == 25 then
+			sendToDiscord(
+				info.colour,
+				"New Order".." - "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname,
+				info["veh"]:gsub('%<br>', '').." - "..info["vehplate"],
+				"Preview Report"..info.shopName,
+				htmllist,
+				info
+			)
+			htmllist = {}
+			count = 0
+		elseif count == #info["modlist"] - 25 then
+			sendToDiscord(
+				info.colour,
+				"Continued".." - "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname,
+				info["veh"]:gsub('%<br>', '').." - "..info["vehplate"],
+				"Preview Report"..info.shopName,
+				htmllist,
+				info
+			)
+		end
+	end
+	if #info["modlist"] <= 25 then
+		sendToDiscord(
+			info.colour,
+			"New Order".." - "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname,
+			info["veh"]:gsub('%<br>', '').." - "..info["vehplate"],
+			"Preview Report"..info.shopName,
+			htmllist,
+			info
+		)
+	end
+end)
+RegisterNetEvent("qb-mechanicjob:server:preview", function(active, vehicle, plate)
+	local src = source
+	if active then
+		if Config.Debug then print("^5Debug^7: ^3Preview: ^2Player^7(^4"..src.."^7)^2 Started previewing^7") end
+		Previewing[src] = {
+			active = active,
+			vehicle = vehicle,
+			plate = plate
+		}
+	else
+		if Config.Debug then print("^5Debug^7: ^3Preview: ^2Player^7(^4"..src.."^7)^2 Stopped previewing^7") end
+		Previewing[src] = nil
+	end
+end)
+AddEventHandler('playerDropped', function()
+    local src = source
+	if Previewing[src] then
+		if Config.Debug then print("^5Debug^7: ^3Preview: ^2Player dropped while previewing^7, ^2resetting vehicle properties^7") end
+		local properties = {}
+		local result = MySQL.query.await('SELECT mods FROM player_vehicles WHERE plate = ?', { Previewing[src].plate })
+		if result[1] then TriggerClientEvent("qb-mechanicjob:preview:exploitfix", -1, Previewing[src].vehicle, json.decode(result[1].mods)) end
+		print("Resetting Vehicles Properties")
+	end
+	Previewing[src] = nil
+end)
+RegisterNetEvent("qb-mechanicjob:server:giveList", function(info)
+	local src = source
+	local Player = QBCore.Functions.GetPlayer(src)
+	Player.Functions.AddItem("mechboard", 1, nil, info)
+	TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items["mechboard"], "add", 1)
+end)
+
+QBCore.Functions.CreateUseableItem("mechboard", function(source, item)
+	if item.info["vehlist"] == nil then
+		triggerNotify("MechBoard", "The board is empty, don't spawn this item", "error", source)
+	else
+		TriggerClientEvent("qb-mechanicjob:client:giveList", source, item)
+	end
+end)
+
+QBCore.Commands.Add("preview", "Xem trước các tùy chỉnh xe", {}, false, function(source)
+    -- TÊN SỰ KIỆN NÀY PHẢI ĐÚNG
+    TriggerClientEvent("qb-mechanicjob:client:Preview:Menu", source) 
+end, "user")

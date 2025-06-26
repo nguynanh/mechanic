@@ -23,11 +23,11 @@ local vehicleTrails = {}
 
 -- Các hàm khởi tạo
 function GetNos()
-	QBCore.Functions.TriggerCallback('jim-mechanic:GetNosLoaded', function(vehs) VehicleNitrous = vehs or {} end)
+	QBCore.Functions.TriggerCallback('qb-mechanicjob:GetNosLoaded', function(vehs) VehicleNitrous = vehs or {} end)
 end
 
 function GetNosColour()
-	QBCore.Functions.TriggerCallback('jim-mechanic:GetNosColour', function(vehs) nosColour = vehs or {} end)
+	QBCore.Functions.TriggerCallback('qb-mechanicjob:GetNosColour', function(vehs) nosColour = vehs or {} end)
 end
 
 AddEventHandler('onResourceStart', function(resource)
@@ -91,7 +91,7 @@ local function RunNosInstallationProgressbar(vehicle, playerPed)
         if VehicleNitrous and VehicleNitrous[trim(GetVehicleNumberPlateText(vehicle))] then
             toggleItem(true, "noscan")
         end
-        TriggerServerEvent('jim-mechanic:server:LoadNitrous', trim(GetVehicleNumberPlateText(vehicle)))
+        TriggerServerEvent('qb-mechanicjob:server:LoadNitrous', trim(GetVehicleNumberPlateText(vehicle)))
         SetVehicleDoorShut(vehicle, 4, false)
         updateCar(vehicle)
         toggleItem(false, "nos")
@@ -103,7 +103,7 @@ local function RunNosInstallationProgressbar(vehicle, playerPed)
 end
 
 -- Sự kiện chính khi sử dụng vật phẩm
-RegisterNetEvent('jim-mechanic:client:applyNOS', function()
+RegisterNetEvent('qb-mechanicjob:client:applyNOS', function()
     local playerPed = PlayerPedId()
     local coords = GetEntityCoords(playerPed)
 
@@ -167,12 +167,12 @@ RegisterNetEvent('jim-mechanic:client:applyNOS', function()
     end
 end)
 -- Các sự kiện cập nhật và đồng bộ
-RegisterNetEvent('jim-mechanic:client:UpdateNitroLevel', function(Plate, level) VehicleNitrous[Plate] = { hasnitro = true, level = level } end)
-RegisterNetEvent('jim-mechanic:client:LoadNitrous', function(Plate)
+RegisterNetEvent('qb-mechanicjob:client:UpdateNitroLevel', function(Plate, level) VehicleNitrous[Plate] = { hasnitro = true, level = level } end)
+RegisterNetEvent('qb-mechanicjob:client:LoadNitrous', function(Plate)
     if not LocalPlayer.state.isLoggedIn then return end
     VehicleNitrous[Plate] = { hasnitro = true, level = 100 }
 end)
-RegisterNetEvent('jim-mechanic:client:UnloadNitrous', function(Plate)
+RegisterNetEvent('qb-mechanicjob:client:UnloadNitrous', function(Plate)
     if not LocalPlayer.state.isLoggedIn then return end
     VehicleNitrous[Plate] = nil
 end)
@@ -230,7 +230,7 @@ RegisterCommand('+nosBoost', function()
 			if purgemode then
 				if not boosting then
 					boosting = true
-					TriggerServerEvent('jim-mechanic:server:SyncPurge', VehToNet(CurrentVehicle), true, purgeSize)
+					TriggerServerEvent('qb-mechanicjob:server:SyncPurge', VehToNet(CurrentVehicle), true, purgeSize)
 					CreateThread(function() while boosting do purgeCool = purgeCool + 1; Wait(500) end end)
 				end
 			else
@@ -240,7 +240,7 @@ RegisterCommand('+nosBoost', function()
 					ModifyVehicleTopSpeed(CurrentVehicle, Config.NosTopSpeed or -1.0)
 					ApplyForceToEntity(CurrentVehicle, 3, 0, Config.NosBoostPower[boostLevel], 0, 0.0, -1.2, 0.0, 0, true, true, true, false, true)
 					if Config.EnableScreen then SetNitroBoostScreenEffectsEnabled(true) end
-					if Config.EnableTrails then TriggerServerEvent('jim-mechanic:server:SyncTrail', VehToNet(CurrentVehicle), true) end
+					if Config.EnableTrails then TriggerServerEvent('qb-mechanicjob:server:SyncTrail', VehToNet(CurrentVehicle), true) end
 					SetVehicleBoostActive(CurrentVehicle, 1)
 					
 					CreateThread(function()
@@ -249,8 +249,8 @@ RegisterCommand('+nosBoost', function()
 								local useRate = Config.NitrousUseRate
 								if boostLevel == 1 then useRate = useRate / 2 end
 								if boostLevel == 3 then useRate = useRate * 1.5 end
-								if Config.EnableFlame then TriggerServerEvent('jim-mechanic:server:SyncFlame', VehToNet(CurrentVehicle), true) end
-								TriggerServerEvent('jim-mechanic:server:UpdateNitroLevel', Plate, VehicleNitrous[Plate].level - useRate)
+								if Config.EnableFlame then TriggerServerEvent('qb-mechanicjob:server:SyncFlame', VehToNet(CurrentVehicle), true) end
+								TriggerServerEvent('qb-mechanicjob:server:UpdateNitroLevel', Plate, VehicleNitrous[Plate].level - useRate)
 							else
 								NitrousActivated = false -- Dừng vòng lặp
 							end
@@ -258,15 +258,15 @@ RegisterCommand('+nosBoost', function()
 						end
                         -- Logic dừng khi hết NOS
 						if boosting then
-							TriggerServerEvent('jim-mechanic:server:UnloadNitrous', Plate)
+							TriggerServerEvent('qb-mechanicjob:server:UnloadNitrous', Plate)
 							toggleItem(true, "noscan")
 						end
 						boosting = false
 						forceStop = false
 						SetVehicleBoostActive(CurrentVehicle, 0)
-						if Config.EnableFlame then TriggerServerEvent('jim-mechanic:server:SyncFlame', VehToNet(CurrentVehicle), false) end
+						if Config.EnableFlame then TriggerServerEvent('qb-mechanicjob:server:SyncFlame', VehToNet(CurrentVehicle), false) end
 						if Config.EnableScreen then SetNitroBoostScreenEffectsEnabled(false) end
-						if Config.EnableTrails then TriggerServerEvent('jim-mechanic:server:SyncTrail', VehToNet(CurrentVehicle), false) end
+						if Config.EnableTrails then TriggerServerEvent('qb-mechanicjob:server:SyncTrail', VehToNet(CurrentVehicle), false) end
 						ModifyVehicleTopSpeed(CurrentVehicle, -1.0)
 					end)
 				end
@@ -277,21 +277,21 @@ end)
 
 RegisterCommand('-nosBoost', function()
     if not CurrentVehicle or not DoesEntityExist(CurrentVehicle) then return end
-    TriggerServerEvent('jim-mechanic:server:SyncPurge', VehToNet(CurrentVehicle), false)
+    TriggerServerEvent('qb-mechanicjob:server:SyncPurge', VehToNet(CurrentVehicle), false)
     boosting = false
 	if NitrousActivated then
 		NitrousActivated = false
 		StopSound(soundId)
 		SetVehicleBoostActive(CurrentVehicle, 0)
-		if Config.EnableFlame then TriggerServerEvent('jim-mechanic:server:SyncFlame', VehToNet(CurrentVehicle), false) end
+		if Config.EnableFlame then TriggerServerEvent('qb-mechanicjob:server:SyncFlame', VehToNet(CurrentVehicle), false) end
 		ModifyVehicleTopSpeed(CurrentVehicle, -1.0)
-		if Config.EnableTrails then TriggerServerEvent('jim-mechanic:server:SyncTrail', VehToNet(CurrentVehicle), false) end
+		if Config.EnableTrails then TriggerServerEvent('qb-mechanicjob:server:SyncTrail', VehToNet(CurrentVehicle), false) end
 		if Config.EnableScreen then SetNitroBoostScreenEffectsEnabled(false) end
 	end
 end)
 
 -- Xử lý hiệu ứng được đồng bộ từ server
-RegisterNetEvent('jim-mechanic:client:SyncPurge', function(netid, enabled, size)
+RegisterNetEvent('qb-mechanicjob:client:SyncPurge', function(netid, enabled, size)
     if not NetworkDoesEntityExistWithNetworkId(netid) then return end
     local vehicle = NetToVeh(netid)
     if DoesEntityExist(vehicle) then
@@ -299,7 +299,7 @@ RegisterNetEvent('jim-mechanic:client:SyncPurge', function(netid, enabled, size)
     end
 end)
 
-RegisterNetEvent('jim-mechanic:client:SyncTrail', function(netid, enabled)
+RegisterNetEvent('qb-mechanicjob:client:SyncTrail', function(netid, enabled)
     if not NetworkDoesEntityExistWithNetworkId(netid) then return end
     local vehicle = NetToVeh(netid)
     if DoesEntityExist(vehicle) then
@@ -307,7 +307,7 @@ RegisterNetEvent('jim-mechanic:client:SyncTrail', function(netid, enabled)
     end
 end)
 
-RegisterNetEvent('jim-mechanic:client:SyncFlame', function(netid, enable)
+RegisterNetEvent('qb-mechanicjob:client:SyncFlame', function(netid, enable)
     if not NetworkDoesEntityExistWithNetworkId(netid) then return end
     local vehicle = NetToVeh(netid)
     if DoesEntityExist(vehicle) then
@@ -468,7 +468,7 @@ end
 -- LOGIC MỞ MENU CHỌN MÀU CHO NOS PURGE
 -- ===========================================================
 
-RegisterNetEvent('jim-mechanic:client:NOS:rgbORhex', function()
+RegisterNetEvent('qb-mechanicjob:client:NOS:rgbORhex', function()
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
     local vehicle = getClosest(coords)
@@ -488,15 +488,15 @@ RegisterNetEvent('jim-mechanic:client:NOS:rgbORhex', function()
     if DoesEntityExist(vehicle) then
         local PaintMenu = {
             { icon = "noscolour", header = Lang:t('nos.nosColour'), text = Lang:t('paintrgb.customheader'), isMenuHeader = true },
-            { icon = "fas fa-circle-xmark", header = "", txt = string.gsub(Lang:t('common.close'), "❌ ", ""), params = { event = "jim-mechanic:client:Menu:Close" } },
-            { header = Lang:t('paintrgb.hex'), text = Lang:t('common.current')..":<br>"..currentHEXCol, params = { event = "jim-mechanic:client:NOS:HEXPicker" }, },
-            { header = Lang:t('paintrgb.rgb'), text = Lang:t('common.current')..":<br>"..currentRBGCol, params = { event = "jim-mechanic:client:NOS:RGBPicker" }, }
+            { icon = "fas fa-circle-xmark", header = "", txt = string.gsub(Lang:t('common.close'), "❌ ", ""), params = { event = "qb-mechanicjob:client:Menu:Close" } },
+            { header = Lang:t('paintrgb.hex'), text = Lang:t('common.current')..":<br>"..currentHEXCol, params = { event = "qb-mechanicjob:client:NOS:HEXPicker" }, },
+            { header = Lang:t('paintrgb.rgb'), text = Lang:t('common.current')..":<br>"..currentRBGCol, params = { event = "qb-mechanicjob:client:NOS:RGBPicker" }, }
         }
         exports['qb-menu']:openMenu(PaintMenu)
     end
 end)
 
-RegisterNetEvent('jim-mechanic:client:NOS:RGBPicker', function()
+RegisterNetEvent('qb-mechanicjob:client:NOS:RGBPicker', function()
     local dialog = exports['qb-input']:ShowInput({
         header = "<center>"..Lang:t('nos.nosColour').."<br>"..Lang:t('paintrgb.rgb'),
         inputs = {
@@ -510,11 +510,11 @@ RegisterNetEvent('jim-mechanic:client:NOS:RGBPicker', function()
         if r > 255 then r = 255 end
         if g > 255 then g = 255 end
         if b > 255 then b = 255 end
-        TriggerEvent('jim-mechanic:client:NOS:RGBApply', { r, g, b })
+        TriggerEvent('qb-mechanicjob:client:NOS:RGBApply', { r, g, b })
     end
 end)
 
-RegisterNetEvent('jim-mechanic:client:NOS:HEXPicker', function()
+RegisterNetEvent('qb-mechanicjob:client:NOS:HEXPicker', function()
     local dialog = exports['qb-input']:ShowInput({
         header = "<center>"..Lang:t('nos.nosColour').."<br>"..Lang:t('paintrgb.hex'),
         inputs = { { type = 'text', name = 'hex', text = '#' } }
@@ -523,11 +523,11 @@ RegisterNetEvent('jim-mechanic:client:NOS:HEXPicker', function()
         local hex = dialog.hex:gsub("#","")
         while string.len(hex) < 6 do hex = hex.."0" Wait(10) end
         local r, g, b = HexTorgb(hex)
-        TriggerEvent('jim-mechanic:client:NOS:RGBApply', { r, g, b })
+        TriggerEvent('qb-mechanicjob:client:NOS:RGBApply', { r, g, b })
     end
 end)
 
-RegisterNetEvent('jim-mechanic:client:NOS:RGBApply', function(data)
+RegisterNetEvent('qb-mechanicjob:client:NOS:RGBApply', function(data)
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(ped, false)
     if not DoesEntityExist(vehicle) then return end
@@ -543,7 +543,7 @@ RegisterNetEvent('jim-mechanic:client:NOS:RGBApply', function(data)
     Wait(1000)
     StartNetworkedParticleFxNonLoopedAtCoord("scr_wheel_burnout", GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 0.6, 0.8), 0.0, 0.0, GetEntityHeading(vehicle), 0.5, 0.0, 0.0, 0.0)
     Wait(3000)
-    TriggerServerEvent("jim-mechanic:server:ChangeColour", trim(GetVehicleNumberPlateText(vehicle)), data)
+    TriggerServerEvent("qb-mechanicjob:server:ChangeColour", trim(GetVehicleNumberPlateText(vehicle)), data)
     SetVehicleDoorShut(vehicle, 4, false)
     emptyHands(ped)
     -- toggleItem(false, "noscolour") -- Bạn có thể bật lại dòng này nếu muốn vật phẩm bị xóa sau khi dùng
@@ -552,7 +552,7 @@ end)
 -- ===========================================================
 -- SỰ KIỆN ĐỒNG BỘ MÀU TỪ SERVER (PHẦN BỊ THIẾU)
 -- ===========================================================
-RegisterNetEvent('jim-mechanic:client:ChangeColour', function(plate, newColour)
+RegisterNetEvent('qb-mechanicjob:client:ChangeColour', function(plate, newColour)
     if not LocalPlayer.state.isLoggedIn then return end
 
     -- Cập nhật bảng màu cục bộ của client
@@ -589,7 +589,7 @@ CreateThread(function()
         options = {
             {
                 type = "client",
-                event = "jim-mechanic:client:NosRefill",
+                event = "qb-mechanicjob:client:NosRefill",
                 icon = station.target.icon,
                 label = station.target.label,
                 item = station.target.item, -- Yêu cầu phải có bình rỗng 'noscan'
@@ -600,8 +600,8 @@ CreateThread(function()
 end)
 
 -- Sự kiện được gọi khi người chơi tương tác với trạm nạp
-RegisterNetEvent('jim-mechanic:client:NosRefill', function(data)
-    QBCore.Functions.TriggerCallback('jim-mechanic:server:NosRefill', function(success)
+RegisterNetEvent('qb-mechanicjob:client:NosRefill', function(data)
+    QBCore.Functions.TriggerCallback('qb-mechanicjob:server:NosRefill', function(success)
         if success then
             triggerNotify(nil, "Nạp đầy bình NOS thành công!", "success")
         else

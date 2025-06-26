@@ -1,9 +1,9 @@
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
-author 'Kakarot & Jimathy (Merged by Nguyn Anh)'
-description 'Custom Mechanic Job'
-version '4.1.0'
+author 'Kakarot & Jimathy (Merged by Nguyn Anh & Gemini)'
+description 'Custom Mechanic Job - Unified Version'
+version '5.0.0'
 
 shared_scripts {
     '@qb-core/shared/locale.lua',
@@ -13,20 +13,21 @@ shared_scripts {
 }
 
 client_scripts {
-    'client/functions.lua', -- Tệp chứa TẤT CẢ các hàm phụ trợ của client
+    'client/functions.lua',
     'client/main.lua',
     'client/cosmetic.lua',
     'client/drivingdistance.lua',
     'client/performance.lua',
     'client/repair.lua',
     'client/tunerchip.lua',
-    'client/cl_nos.lua'
+    'client/cl_nos.lua',
+    'client/cl_preview.lua' -- Thêm tệp preview
 }
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua',
-    'server/sv_nos.lua'
+    'server/sv_nos.lua' -- Tách biệt logic NOS
 }
 
 ui_page 'html/index.html'
