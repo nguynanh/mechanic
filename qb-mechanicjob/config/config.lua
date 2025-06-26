@@ -101,3 +101,38 @@ Config.PhoneMail = "qb" -- "qb", "gks", "qs"
 Config.DiscordPreview = false
 Config.DiscordDefault = ""
 Config.DiscordColour = 16753920
+-- Thêm vào cuối tệp qb-mechanicjob/config/config.lua
+
+-- tệp: qb-mechanicjob/config.lua
+
+Config.PreviewSpot = {
+    enabled = true,
+    coords = vector3(-211.72, -1324.1, 30.27),
+    
+    -- Cài đặt cho tương tác "Nhấn E"
+    interaction = {
+        radius = 3.0,
+        label = "Xem trước tùy chỉnh",
+        icon = "fas fa-eye",
+    },
+
+    -- Cài đặt cho Marker hiển thị trên mặt đất
+    marker = {
+        enabled = true,
+        drawDist = 20.0,
+        type = 23,
+        size = { x = 3.0, y = 3.0, z = 0.5 },
+        color = { r = 255, g = 0, b = 0, a = 100 },
+        zOffset = -0.35
+    },
+
+    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
+    blip = {
+        enabled = true, -- Đặt thành false để tắt blip
+        sprite = 15,    -- ID của icon blip (72 là icon của Benny's)
+        display = 4,    -- Cách hiển thị (4 là luôn luôn)
+        scale = 0.7,    -- Kích thước blip
+        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
+        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
+    }
+}

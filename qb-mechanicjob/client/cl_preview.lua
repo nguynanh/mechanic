@@ -1,7 +1,9 @@
 local QBCore = exports['qb-core']:GetCoreObject()
+IsPreviewing = false
 local previewing = false
 local originalProperties = {}
 local inMechanicLocation = false
+
 
 RegisterNetEvent('qb-mechanicjob:client:SetInsideLocation', function(inside)
     inMechanicLocation = inside
@@ -10,16 +12,22 @@ end)
 -- Hàm kiểm tra điều kiện đã được chuẩn hóa
 local function canUsePreview()
     local playerPed = PlayerPedId()
-    if not outCar() then
-        QBCore.Functions.Notify(Lang:t('functions.outCar'), 'error')
+    
+    -- [[ SỬA ĐỔI ]]
+    -- Dòng này kiểm tra xem người chơi có đang ở trong xe không. Chúng ta giữ lại nó.
+    if not IsPedInAnyVehicle(playerPed, false) then
+        QBCore.Functions.Notify('Bạn phải ở trong xe!', 'error')
         return false
     end
-    local vehicle = GetVehiclePedIsUsing(playerPed)
-    if not DoesEntityExist(vehicle) then return false end
-    if GetPedInVehicleSeat(vehicle, -1) ~= playerPed then
+
+    -- Dòng này kiểm tra ghế lái. Chúng ta cũng nên giữ lại.
+    if GetPedInVehicleSeat(GetVehiclePedIsIn(playerPed, false), -1) ~= playerPed then
         QBCore.Functions.Notify('Bạn phải ngồi ở ghế lái!', 'error')
         return false
     end
+
+    -- [[ TÙY CHỌN: XÓA HOẶC GIỮ LẠI CÁC KIỂM TRA SAU ]]
+    -- Nếu bạn không muốn giới hạn theo nghề, hãy xóa hoặc comment out khối này
     if Config.PreviewJob then
         local playerJob = QBCore.Functions.GetPlayerData().job
         local hasJob = false
@@ -31,13 +39,15 @@ local function canUsePreview()
             return false
         end
     end
-    -- Bạn có thể bật lại phần kiểm tra vị trí nếu cần
+
+    -- Nếu bạn không muốn giới hạn theo vị trí PolyZone (vì giờ đã dùng qb-target), hãy xóa hoặc comment out khối này
     -- if Config.PreviewLocation then
     --     if not inMechanicLocation then
     --         QBCore.Functions.Notify(Lang:t('functions.shop'), 'error')
     --         return false
     --     end
     -- end
+
     return true
 end
 
@@ -59,35 +69,45 @@ local function printDifferences(vehicle, oldProps, newProps)
 end
 
 -- Bắt đầu phiên xem trước
+-- Thay thế toàn bộ hàm startPreviewSession cũ bằng hàm này
 local function startPreviewSession(playerPed, vehicle)
-	if previewing then return end
+    if previewing then return end
+
+    IsPreviewing = true -- Báo cho các script khác biết chế độ preview đang BẬT
     previewing = true
-    
+
     QBCore.Functions.Notify("Bắt đầu chế độ xem trước. Ra khỏi xe hoặc nhấn ESC để hoàn tất.", "primary")
     TriggerServerEvent("qb-mechanicjob:server:preview", true, VehToNet(vehicle), Trim(GetVehicleNumberPlateText(vehicle)))
     FreezeEntityPosition(vehicle, true)
-	originalProperties = QBCore.Functions.GetVehicleProperties(vehicle)
+    originalProperties = QBCore.Functions.GetVehicleProperties(vehicle)
 
-	CreateThread(function()
-		while previewing do
-			Wait(500)
+    -- Hiển thị thông báo HỦY bằng ox_lib
+    lib.showTextUI("Xuống xe để hủy xem trước")
+
+    CreateThread(function()
+        while previewing do
+            Wait(500)
             local currentVehicle = GetVehiclePedIsUsing(playerPed)
-			if not IsPedInAnyVehicle(playerPed, false) or currentVehicle ~= vehicle or IsControlJustPressed(0, 322) then -- 322 is ESC key
-				previewing = false
-			end
+            if not IsPedInAnyVehicle(playerPed, false) or currentVehicle ~= vehicle or IsControlJustPressed(0, 322) then -- 322 là phím ESC
+                previewing = false
+            end
 
-			if not previewing then
-				FreezeEntityPosition(vehicle, false)
-				TriggerServerEvent("qb-mechanicjob:server:preview", false)
-				local newProperties = QBCore.Functions.GetVehicleProperties(vehicle)
-				QBCore.Functions.SetVehicleProperties(vehicle, originalProperties)
-				SetVehicleUndriveable(vehicle, false)
-				SetVehicleEngineOn(vehicle, true, false, false)
-				printDifferences(vehicle, originalProperties, newProperties)
-				break
-			end
-		end
-	end)
+            if not previewing then
+                FreezeEntityPosition(vehicle, false)
+                TriggerServerEvent("qb-mechanicjob:server:preview", false)
+                local newProperties = QBCore.Functions.GetVehicleProperties(vehicle)
+                QBCore.Functions.SetVehicleProperties(vehicle, originalProperties)
+                SetVehicleUndriveable(vehicle, false)
+                SetVehicleEngineOn(vehicle, true, false, false)
+
+                printDifferences(vehicle, originalProperties, newProperties)
+
+                IsPreviewing = false -- Báo rằng chế độ preview đã TẮT
+                lib.hideTextUI() -- Ẩn thông báo HỦY
+                break
+            end
+        end
+    end)
 end
 
 -- Menu chính
@@ -361,14 +381,18 @@ RegisterNetEvent('qb-mechanicjob:client:Preview:Plates', function()
         { isMenuHeader = true, header = Lang:t("police.plates") },
         { icon = "fas fa-circle-arrow-left", header = "", txt = Lang:t("common.ret"), params = { event = "qb-mechanicjob:client:Preview:Menu" } }
     }
-    
-    -- [SỬA LỖI] Lấy dữ liệu trực tiếp từ Config.PlateIndexes thay vì Lang:t
+
     local plateOptions = Config.PlateIndexes or {}
-    
+
     for _, v in ipairs(plateOptions) do
         local icon = (GetVehicleNumberPlateTextIndex(vehicle) == v.id) and "fas fa-check" or ""
         local disabled = (GetVehicleNumberPlateTextIndex(vehicle) == v.id)
-        PlateMenu[#PlateMenu + 1] = { icon = icon, isMenuHeader = disabled, header = v.label, params = { event = 'qb-mechanicjob:client:Preview:Plates:Apply', args = v.id  } }
+        PlateMenu[#PlateMenu + 1] = { 
+            icon = icon, 
+            isMenuHeader = disabled, 
+            header = v.label, -- Sử dụng trực tiếp label từ Config
+            params = { event = 'qb-mechanicjob:client:Preview:Plates:Apply', args = v.id } 
+        }
     end
     exports['qb-menu']:openMenu(PlateMenu)
 end)

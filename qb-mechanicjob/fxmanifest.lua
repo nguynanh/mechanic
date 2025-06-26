@@ -6,6 +6,7 @@ description 'Custom Mechanic Job - Unified Version'
 version '5.0.0'
 
 shared_scripts {
+    '@ox_lib/init.lua',
     '@qb-core/shared/locale.lua',
     'config/config.lua',
     'config/const.lua',

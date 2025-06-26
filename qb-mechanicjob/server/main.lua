@@ -480,7 +480,7 @@ QBCore.Functions.CreateUseableItem("mechboard", function(source, item)
 	end
 end)
 
-QBCore.Commands.Add("preview", "Xem trước các tùy chỉnh xe", {}, false, function(source)
-    -- TÊN SỰ KIỆN NÀY PHẢI ĐÚNG
-    TriggerClientEvent("qb-mechanicjob:client:Preview:Menu", source) 
-end, "user")
+--QBCore.Commands.Add("preview", "Xem trước các tùy chỉnh xe", {}, false, function(source)
+--    -- TÊN SỰ KIỆN NÀY PHẢI ĐÚNG
+--  --  TriggerClientEvent("qb-mechanicjob:client:Preview:Menu", source) 
+--end, "user")
