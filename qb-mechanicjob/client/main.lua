@@ -1,10 +1,12 @@
 -- =================================================================
--- NỘI DUNG HOÀN CHỈNH CHO qb-mechanicjob/client/main.lua
+-- PHIÊN BẢN SỬA LỖI CUỐI CÙNG: qb-mechanicjob/client/main.lua
+-- Khắc phục lỗi sai tham số trong DrawMarker
 -- =================================================================
 
 local QBCore = exports['qb-core']:GetCoreObject()
 local PlayerData = {}
 local currentShopBlips = {}
+local inMechanicLocation = false
 
 -- Handlers
 AddEventHandler('onResourceStart', function(resourceName)
@@ -24,6 +26,10 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     PlayerData = {}
 end)
 
+RegisterNetEvent('qb-mechanicjob:client:SetInsideLocation', function(inside)
+    inMechanicLocation = inside
+end)
+
 -- Local Functions
 local function SpawnListVehicle(model, spawnPoint)
     QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
@@ -40,13 +46,11 @@ end
 
 local function VehicleList(shop)
     local vehicleMenu = { { header = Lang:t('menu.vehicle_list'), isMenuHeader = true } }
-
     if not Config.Shops[shop] or not Config.Shops[shop].vehicles or not Config.Shops[shop].vehicles.list then
         print('^1[ERROR] Khong tim thay danh sach xe cho garage: ' .. shop .. ' trong config.lua^7')
         QBCore.Functions.Notify("Garage này chưa được cấu hình danh sách xe!", "error")
         return
     end
-
     local list = Config.Shops[shop].vehicles.list
     for i = 1, #list do
         local vehicleData = QBCore.Shared.Vehicles[list[i]]
@@ -55,18 +59,11 @@ local function VehicleList(shop)
             header = vehicleName,
             params = {
                 event = 'qb-mechanicjob:client:SpawnListVehicle',
-                args = {
-                    spawnName = list[i],
-                    location = Config.Shops[shop].vehicles.spawn
-                }
+                args = { spawnName = list[i], location = Config.Shops[shop].vehicles.spawn }
             }
         }
     end
-
-    vehicleMenu[#vehicleMenu + 1] = {
-        header = Lang:t('menu.close'),
-        params = { event = 'qb-menu:client:closeMenu' }
-    }
+    vehicleMenu[#vehicleMenu + 1] = { header = Lang:t('menu.close'), params = { event = 'qb-menu:client:closeMenu' } }
     exports['qb-menu']:openMenu(vehicleMenu)
 end
 
@@ -75,29 +72,25 @@ RegisterNetEvent('qb-mechanicjob:client:SpawnListVehicle', function(data)
     SpawnListVehicle(data.spawnName, data.location)
 end)
 
--- Main Thread
+-- Thiết lập các yếu tố tĩnh (chỉ chạy một lần)
 CreateThread(function()
-    -- Tạo target cho các cửa hàng
+    -- Tạo target và blip cho các cửa hàng
     if Config.Shops and type(Config.Shops) == 'table' then
         for k, v in pairs(Config.Shops) do
             if v and type(v) == 'table' then
-               if v.polyzone then
-                   local shopZone = PolyZone:Create(v.polyzone, { name = k, debugPoly = Config.Debug })
-                   shopZone:onPlayerInOut(function(isPointInside)
-                      if isPointInside then
-                         TriggerEvent("qb-mechanicjob:client:SetInsideLocation", true)
-                      else
-                          TriggerEvent("qb-mechanicjob:client:SetInsideLocation", false)
-                      end
-                   end)
-              end
+                if v.polyzone then
+                    local shopZone = PolyZone:Create(v.polyzone, { name = k, debugPoly = Config.Debug })
+                    shopZone:onPlayerInOut(function(isPointInside)
+                       TriggerEvent("qb-mechanicjob:client:SetInsideLocation", isPointInside)
+                    end)
+                end
                 if v.showBlip and v.blipCoords and not currentShopBlips[k] then
-                    local blip = AddBlipForCoord(v.blipCoords)
+                    local blip = AddBlipForCoord(v.blipCoords.x, v.blipCoords.y, v.blipCoords.z)
                     SetBlipSprite(blip, v.blipSprite); SetBlipDisplay(blip, 4); SetBlipScale(blip, 0.6); SetBlipColour(blip, v.blipColor); SetBlipAsShortRange(blip, true)
                     BeginTextCommandSetBlipName('STRING'); AddTextComponentString(v.shopLabel); EndTextCommandSetBlipName(blip)
                     currentShopBlips[k] = blip
                 end
-                if v.duty then
+                 if v.duty then
                     exports['qb-target']:AddCircleZone(k .. '_duty', v.duty, 0.5, { name = k .. '_duty', useZ = true }, { options = { { event = 'QBCore:ToggleDuty', type = 'server', label = Lang:t('target.duty'), icon = 'fas fa-user-clock', job = v.managed and k or nil } }, distance = 2.0 })
                 end
                 if v.stash then
@@ -126,65 +119,8 @@ CreateThread(function()
             end
         end
     end
-end)
 
-
-
--- Thay thế toàn bộ hàm CreateThread đầu tiên bằng phiên bản này
-CreateThread(function()
-    -- Tạo target và blip cho các cửa hàng (giữ nguyên)
-    if Config.Shops and type(Config.Shops) == 'table' then
-        for k, v in pairs(Config.Shops) do
-            if v and type(v) == 'table' then
-               if v.polyzone then
-                   local shopZone = PolyZone:Create(v.polyzone, { name = k, debugPoly = Config.Debug })
-                   shopZone:onPlayerInOut(function(isPointInside)
-                      if isPointInside then
-                         TriggerEvent("qb-mechanicjob:client:SetInsideLocation", true)
-                      else
-                          TriggerEvent("qb-mechanicjob:client:SetInsideLocation", false)
-                      end
-                   end)
-              end
-                if v.showBlip and v.blipCoords and not currentShopBlips[k] then
-                    local blip = AddBlipForCoord(v.blipCoords.x, v.blipCoords.y, v.blipCoords.z) -- Sửa lại để đọc table
-                    SetBlipSprite(blip, v.blipSprite); SetBlipDisplay(blip, 4); SetBlipScale(blip, 0.6); SetBlipColour(blip, v.blipColor); SetBlipAsShortRange(blip, true)
-                    BeginTextCommandSetBlipName('STRING'); AddTextComponentString(v.shopLabel); EndTextCommandSetBlipName(blip)
-                    currentShopBlips[k] = blip
-                end
-                if v.duty then
-                    exports['qb-target']:AddCircleZone(k .. '_duty', vector3(v.duty.x, v.duty.y, v.duty.z), 0.5, { name = k .. '_duty', useZ = true }, { options = { { event = 'QBCore:ToggleDuty', type = 'server', label = Lang:t('target.duty'), icon = 'fas fa-user-clock', job = v.managed and k or nil } }, distance = 2.0 })
-                end
-                if v.stash then
-                    exports['qb-target']:AddCircleZone(k .. '_stash', vector3(v.stash.x, v.stash.y, v.stash.z), 0.5, { name = k .. '_stash', useZ = true }, { options = { { event = 'qb-mechanicjob:server:stash', type = 'server', data = { job = k }, label = Lang:t('target.stash'), icon = 'fas fa-box-open', job = v.managed and k or nil } }, distance = 2.0 })
-                end
-                if v.paint then
-                    exports['qb-target']:AddCircleZone(k .. '_paintbooth', vector3(v.paint.x, v.paint.y, v.paint.z), 2.5, { name = k .. '_paintbooth', useZ = true }, { options = { { label = Lang:t('target.paint'), icon = 'fas fa-fill-drip', job = v.managed and k or nil, action = function() PaintCategories() end } }, distance = 2.5 })
-                end
-                if v.vehicles and v.vehicles.withdraw then
-                    exports['qb-target']:AddCircleZone(k .. '_spawner', vector3(v.vehicles.withdraw.x, v.vehicles.withdraw.y, v.vehicles.withdraw.z), 1.5, { name = k .. '_spawner', useZ = true }, {
-                        options = {
-                            {
-                                label = Lang:t('target.withdraw'), icon = 'fas fa-car', job = v.managed and k or nil,
-                                canInteract = function() return GetVehiclePedIsUsing(PlayerPedId()) == 0 end,
-                                action = function() VehicleList(k) end
-                            },
-                            {
-                                label = Lang:t('target.deposit'), icon = 'fas fa-car', job = k,
-                                canInteract = function() return GetVehiclePedIsUsing(PlayerPedId()) ~= 0 end,
-                                action = function() DeleteEntity(GetVehiclePedIsUsing(PlayerPedId())) end
-                            }
-                        },
-                        distance = 2.5
-                    })
-                end
-            end
-        end
-    end
-
-    -- =============================================================
-    -- PHẦN ĐƯỢC THÊM VÀO ĐỂ TẠO BLIP CHO ĐIỂM XEM TRƯỚC
-    -- =============================================================
+    -- Tạo blip trên bản đồ cho điểm xem trước
     if Config.PreviewSpot and Config.PreviewSpot.blip and Config.PreviewSpot.blip.enabled then
         local spotCfg = Config.PreviewSpot
         local mapBlip = AddBlipForCoord(spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z)
@@ -196,5 +132,74 @@ CreateThread(function()
         BeginTextCommandSetBlipName("STRING")
         AddTextComponentString(spotCfg.blip.label)
         EndTextCommandSetBlipName(mapBlip)
+    end
+end)
+
+-- Vòng lặp chính để xử lý Marker và tương tác "E" cho điểm Preview (Lấy từ tệp gốc của bạn)
+CreateThread(function()
+    if not Config.PreviewSpot or not Config.PreviewSpot.enabled then
+        return
+    end
+
+    local isPromptShowing = false
+    while true do
+        local sleep = 1000
+        local playerPed = PlayerPedId()
+
+        if PlayerData and PlayerData.job then
+            local spotCfg = Config.PreviewSpot
+            local playerCoords = GetEntityCoords(playerPed)
+            local dist = #(playerCoords - spotCfg.coords)
+
+            if dist < spotCfg.marker.drawDist then
+                sleep = 5
+                
+                if IsPedInAnyVehicle(playerPed, false) then
+                    local vehicle = GetVehiclePedIsIn(playerPed, false)
+                    
+                    if spotCfg.marker and spotCfg.marker.enabled then
+                        -- SỬA LỖI TAI HÀM DRAW MARKER, THỨ TỰ SIZE X, Y, Z ĐÃ ĐÚNG
+                        DrawMarker(
+                            spotCfg.marker.type,
+                            spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z + spotCfg.marker.zOffset,
+                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            spotCfg.marker.size.x, spotCfg.marker.size.y, spotCfg.marker.size.z,
+                            spotCfg.marker.color.r, spotCfg.marker.color.g, spotCfg.marker.color.b, spotCfg.marker.color.a,
+                            false, -- bobUpAndDown
+                            false, -- faceCamera
+                            2, false, nil, nil, false
+                        )
+                    end
+
+                    if dist < spotCfg.interaction.radius and GetPedInVehicleSeat(vehicle, -1) == playerPed then
+                        if not isPromptShowing then
+                            -- THAY THẾ BẰNG HÀM DRAWTEXT CỦA BẠN
+                            exports['qb-core']:DrawText('[E] - ' .. spotCfg.interaction.label, 'left')
+                            isPromptShowing = true
+                        end
+                        
+                        if IsControlJustReleased(0, 38) then -- Phím E
+                            TriggerEvent("qb-mechanicjob:client:Preview:Menu")
+                        end
+                    else
+                        if isPromptShowing then
+                            exports['qb-core']:HideText()
+                            isPromptShowing = false
+                        end
+                    end
+                else
+                    if isPromptShowing then
+                        exports['qb-core']:HideText()
+                        isPromptShowing = false
+                    end
+                end
+            else
+                if isPromptShowing then
+                    exports['qb-core']:HideText()
+                    isPromptShowing = false
+                end
+            end
+        end
+        Wait(sleep)
     end
 end)
