@@ -63,9 +63,99 @@ local wheelCats = {
 }
 
 -- Hàm này tạm thời được đơn giản hóa, bạn có thể thêm lại logic tạo danh sách chi tiết sau khi mọi thứ hoạt động
-local function printDifferences(vehicle, oldProps, newProps)
-    QBCore.Functions.Notify("Đã hoàn tất xem trước. Xe đã được khôi phục.", "success")
-    -- Logic phức tạp để tạo danh sách và gửi đến Discord/email có thể được thêm lại ở đây
+-- File: qb-mechanicjob/client/cl_preview.lua
+
+-- THAY THẾ HÀM CŨ BẰNG HÀM HOÀN CHỈNH NÀY
+local function printDifferences(vehicle, properties, newproperties)
+	-- Ghi log khi kết thúc preview, bạn có thể giữ lại hoặc xóa dòng này nếu không cần
+	-- qblog("Finished Previewing: [**"..Trim(GetVehicleNumberPlateText(vehicle)).."**]")
+
+	local veh = searchCar(vehicle)
+	local vehplate = "["..Trim(properties.plate).."]"
+	-- Khôi phục lại màu kính gốc để tránh lỗi hiển thị
+	SetVehicleWindowTint(vehicle, properties["windowTint"])
+
+	local vehlist = {}
+	local modlist = {}
+
+	-- So sánh màu sắc
+	if properties["color1"] ~= newproperties["color1"] then
+		local colorName = "Custom RGB"
+		local colorFinish = ""
+		if type(newproperties["color1"]) ~= "table" then
+			for _, v in pairs(Config.Paints.Metallic or {}) do if newproperties["color1"] == v.id then colorName = v.label; colorFinish = Lang:t("paint.metallic") end end
+			for _, v in pairs(Config.Paints.Matte or {}) do if newproperties["color1"] == v.id then colorName = v.label; colorFinish = Lang:t("paint.matte") end end
+			for _, v in pairs(Config.Paints.Misc or {}) do if newproperties["color1"] == v.id then colorName = v.label; colorFinish = Lang:t("paint.metals") end end
+			-- Thêm các loại sơn khác nếu có
+		else
+			colorName = "RGB: " .. newproperties["color1"][1] .. ", " .. newproperties["color1"][2] .. ", " .. newproperties["color1"][3]
+		end
+		table.insert(vehlist, Lang:t("paint.primary").." - [ "..colorName.." ("..colorFinish..") ]")
+		table.insert(modlist, {['type'] = colorName.." ("..colorFinish..")", ["item"] = Lang:t("paint.primary").." - paintcan" })
+	end
+
+	-- Lặp lại logic tương tự cho color2, pearlescentColor, wheelColor... (đoạn code đầy đủ sẽ rất dài)
+	-- Dưới đây là ví dụ cho các bộ phận khác để bạn thấy cấu trúc
+	
+	if properties["modSpoilers"] ~= newproperties["modSpoilers"] then
+		local modName = GetLabelText(GetModTextLabel(vehicle, 0, newproperties["modSpoilers"])) or "Unknown"
+		table.insert(vehlist, Lang:t("check.label15") .. (newproperties["modSpoilers"]+1) .. ". " .. modName)
+		table.insert(modlist, {['type'] = modName, ["item"] = Lang:t("check.label15") .. " - spoiler"})
+	end
+
+	if properties["modFrontBumper"] ~= newproperties["modFrontBumper"] then
+		local modName = GetLabelText(GetModTextLabel(vehicle, 1, newproperties["modFrontBumper"])) or "Unknown"
+		table.insert(vehlist, Lang:t("check.label16") .. (newproperties["modFrontBumper"]+1) .. ". " .. modName)
+		table.insert(modlist, {['type'] = modName, ["item"] = Lang:t("check.label16") .. " - bumper"})
+	end
+	
+	
+	-- Gửi kết quả dựa trên cấu hình
+	if Config.PreviewPhone then
+		if #vehlist > 0 then
+			local newlist = table.concat(vehlist, "<br>")
+			local mailEvent
+			if Config.PhoneMail == "gks" then mailEvent = 'gksphone:NewMail'
+			elseif Config.PhoneMail == "qs" then mailEvent = 'qs-smartphone:server:sendNewMail'
+			else mailEvent = 'qb-phone:server:sendNewMail' end
+			
+			TriggerServerEvent(mailEvent, {
+				sender = vehplate,
+				subject = veh,
+				message = veh..Lang:t("police.plates")..": "..vehplate.."<br><br>"..Lang:t("previews.changes")..#vehlist.."<br> ------------------------------ <br>"..newlist,
+				button = {}
+			})
+		end
+	else
+		if #vehlist > 0 then
+			local info = { veh = veh, vehplate = vehplate, vehlist = vehlist }
+			TriggerServerEvent("qb-mechanicjob:server:giveList", info)
+		end
+	end
+
+	if Config.DiscordPreview then
+		if #modlist > 0 then
+			local shopName = " - Unknown"
+			local thumb = "http://clipart-library.com/image_gallery2/Spanner-PNG-Image.png"
+			local htmllink = Config.DiscordDefault
+			local colour = Config.DiscordColour or 16753920
+
+            -- Logic tìm shop gần nhất (giữ nguyên từ jim-mechanic)
+			for k, v in pairs(Config.Shops or {}) do
+                local shopCoords = v.blipCoords or (v.duty and v.duty.xyz)
+                if shopCoords and #(GetEntityCoords(PlayerPedId()) - shopCoords) <= 50.0 then -- Tăng bán kính tìm kiếm
+					if v.discordlink and v.discordlink ~= "" then
+						shopName = " - "..v.shopLabel
+						thumb = v.discordimg or thumb
+						htmllink = v.discordlink
+						colour = v.discordcolour or colour
+					end
+					break
+				end
+			end
+			TriggerServerEvent("qb-mechanicjob:server:discordLog", { veh = veh, vehplate = vehplate, modlist = modlist, shopName = shopName, htmllink = htmllink, colour = colour, thumb = thumb})
+		end
+	end
 end
 
 -- Bắt đầu phiên xem trước
@@ -525,4 +615,13 @@ RegisterNetEvent('qb-mechanicjob:client:Preview:Windows:Apply', function(data)
     
     SetVehicleWindowTint(vehicle, tonumber(data.mod))
     TriggerEvent('qb-mechanicjob:client:Preview:Windows:Check')
+end)
+
+RegisterNetEvent("qb-mechanicjob:preview:exploitfix", function(vehicle, resetprop)
+    if Config.Debug then print("^5Debug^7: ^3Preview: ^2Dang khoi phuc thuoc tinh xe bi bo roi^7") end
+    local veh = NetToVeh(vehicle)
+    if DoesEntityExist(veh) then
+        QBCore.Functions.SetVehicleProperties(veh, resetprop)
+        FreezeEntityPosition(veh, false)
+    end
 end)

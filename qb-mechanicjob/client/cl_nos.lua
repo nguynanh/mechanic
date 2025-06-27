@@ -565,22 +565,27 @@ RegisterNetEvent('qb-mechanicjob:client:ChangeColour', function(plate, newColour
 end)
 
 -- Logic tạo trạm nạp NOS
+-- File: qb-mechanicjob/client/cl_nos.lua
+
+-- XÓA CreateThread cũ và THAY BẰNG CreateThread mới này
 CreateThread(function()
     local station = Config.NosRefillStation
     if not station then return end
 
-    -- Tạo blip trên bản đồ
-    local nosBlip = AddBlipForCoord(station.coords)
-    SetBlipSprite(nosBlip, station.blip.id)
-    SetBlipDisplay(nosBlip, 4)
-    SetBlipScale(nosBlip, station.blip.scale)
-    SetBlipColour(nosBlip, station.blip.colour)
-    SetBlipAsShortRange(nosBlip, true)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString("Trạm nạp NOS")
-    EndTextCommandSetBlipName(nosBlip)
-
-    -- Tạo vùng tương tác qb-target
+    -- Chỉ tạo blip nếu được bật trong config
+    if station.blip and station.blip.enabled and station.blip.id then
+        local nosBlip = AddBlipForCoord(station.coords)
+        SetBlipSprite(nosBlip, station.blip.id)
+        SetBlipDisplay(nosBlip, 4)
+        SetBlipScale(nosBlip, station.blip.scale)
+        SetBlipColour(nosBlip, station.blip.colour)
+        SetBlipAsShortRange(nosBlip, true)
+        BeginTextCommandSetBlipName("STRING")
+        AddTextComponentString("Trạm nạp NOS")
+        EndTextCommandSetBlipName(nosBlip)
+    end
+    
+    -- Tạo vùng tương tác qb-target (giữ nguyên)
     exports['qb-target']:AddCircleZone("nos_refill_station", station.coords, 1.5, {
         name = "nos_refill_station",
         useZ = true,
@@ -592,11 +597,32 @@ CreateThread(function()
                 event = "qb-mechanicjob:client:NosRefill",
                 icon = station.target.icon,
                 label = station.target.label,
-                item = station.target.item, -- Yêu cầu phải có bình rỗng 'noscan'
+                item = station.target.item,
             }
         },
         distance = 2.5
     })
+
+    -- Chỉ vẽ marker 3D nếu được bật trong config
+    if station.marker and station.marker.enabled then
+        while true do
+            local sleep = 1000
+            local playerCoords = GetEntityCoords(PlayerPedId())
+            
+            if #(playerCoords - station.coords) < station.marker.drawDist then
+                sleep = 5
+                DrawMarker(
+                    station.marker.type,
+                    station.coords.x, station.coords.y, station.coords.z + station.marker.zOffset,
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    station.marker.size.x, station.marker.size.y, station.marker.size.z,
+                    station.marker.color.r, station.marker.color.g, station.marker.color.b, station.marker.color.a,
+                    false, true, 2, nil, nil, false
+                )
+            end
+            Wait(sleep)
+        end
+    end
 end)
 
 -- Sự kiện được gọi khi người chơi tương tác với trạm nạp

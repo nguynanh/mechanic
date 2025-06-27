@@ -157,194 +157,91 @@ CreateThread(function()
 end)
 
 -- Vòng lặp riêng để xử lý Marker và tương tác "E" cho điểm Preview
-CreateThread(function()
-    if not Config.PreviewSpot or not Config.PreviewSpot.enabled then
-        return
-    end
+-- File: qb-mechanicjob/client/main.lua
+-- Thêm đoạn mã này vào trong CreateThread ở đầu tệp, sau các logic tạo shop
 
-    local isPromptShowing = false
-    while true do
-        local sleep = 1000
-        local playerPed = PlayerPedId()
+-- Tự động tạo Blip và Vùng tương tác cho TẤT CẢ các điểm Preview trong Config
+-- File: qb-mechanicjob/client/main.lua
+-- THAY THẾ TOÀN BỘ LOGIC XỬ LÝ PREVIEW SPOT BẰNG ĐOẠN MÃ ĐÃ SỬA LỖI NÀY
 
-        if PlayerData and PlayerData.job then
-            local spotCfg = Config.PreviewSpot
-            local playerCoords = GetEntityCoords(playerPed)
-            local dist = #(playerCoords - spotCfg.coords)
+-- Tự động tạo Blip và Vùng tương tác cho TẤT CẢ các điểm Preview trong Config
+if Config.PreviewSpots and #Config.PreviewSpots > 0 then
+    for i, spotCfg in ipairs(Config.PreviewSpots) do
+        -- Chỉ xử lý các điểm được bật
+        if spotCfg.enabled then
+            -- 1. Tạo Blip trên bản đồ
+            if spotCfg.blip and spotCfg.blip.enabled then
+                local mapBlip = AddBlipForCoord(spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z)
+                SetBlipSprite(mapBlip, spotCfg.blip.sprite)
+                SetBlipDisplay(mapBlip, spotCfg.blip.display)
+                SetBlipScale(mapBlip, spotCfg.blip.scale)
+                SetBlipColour(mapBlip, spotCfg.blip.color)
+                SetBlipAsShortRange(mapBlip, true)
+                BeginTextCommandSetBlipName("STRING")
+                AddTextComponentString(spotCfg.blip.label)
+                EndTextCommandSetBlipName(mapBlip)
+            end
 
-            if dist < spotCfg.marker.drawDist then
-                sleep = 5
-                
-                if IsPedInAnyVehicle(playerPed, false) then
-                    local vehicle = GetVehiclePedIsIn(playerPed, false)
-                    
-                    if spotCfg.marker and spotCfg.marker.enabled then
-                        DrawMarker(
-                            spotCfg.marker.type,
-                            spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z + spotCfg.marker.zOffset,
-                            0.0, 0.0, 0.0, 0.0, 180.0, 0.0,
-                            spotCfg.marker.size.x, spotCfg.marker.size.y, spotCfg.marker.size.z,
-                            spotCfg.marker.color.r, spotCfg.marker.color.g, spotCfg.marker.color.b, spotCfg.marker.color.a,
-                            false, true, 2, nil, nil, false
-                        )
-                    end
+            -- 2. Tạo một Thread riêng để quản lý Marker và Tương tác cho mỗi điểm
+            CreateThread(function()
+                local isPromptShowing = false
+                while true do
+                    local sleep = 1000
+                    local playerPed = PlayerPedId()
+                    local playerCoords = GetEntityCoords(playerPed)
 
-                    if dist < spotCfg.interaction.radius and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                        if not isPromptShowing then
-                            lib.showTextUI('[E] - ' .. spotCfg.interaction.label)
-                            isPromptShowing = true
-                        end
+                    if #(playerCoords - spotCfg.coords) < spotCfg.marker.drawDist then
+                        sleep = 5
                         
-                        if IsControlJustReleased(0, 38) then -- Phím E
-                            TriggerEvent("qb-mechanicjob:client:Preview:Menu")
+                        -- [[ SỬA LỖI TẠI ĐÂY ]]
+                        -- Bây giờ, chúng ta chỉ vẽ marker và hiển thị tương tác KHI người chơi ở trong xe.
+                        if IsPedInAnyVehicle(playerPed, false) then
+                            -- Hiển thị Marker trên mặt đất
+                            if spotCfg.marker and spotCfg.marker.enabled then
+                                DrawMarker(
+                                    spotCfg.marker.type,
+                                    spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z + spotCfg.marker.zOffset,
+                                    0.0, 0.0, 0.0, 0.0, 180.0, 0.0,
+                                    spotCfg.marker.size.x, spotCfg.marker.size.y, spotCfg.marker.size.z,
+                                    spotCfg.marker.color.r, spotCfg.marker.color.g, spotCfg.marker.color.b, spotCfg.marker.color.a,
+                                    false, true, 2, nil, nil, false
+                                )
+                            end
+
+                            -- Xử lý tương tác [E]
+                            if GetPedInVehicleSeat(GetVehiclePedIsIn(playerPed, false), -1) == playerPed then
+                                if #(playerCoords - spotCfg.coords) < spotCfg.interaction.radius then
+                                    if not isPromptShowing then
+                                        lib.showTextUI('[E] - ' .. spotCfg.interaction.label)
+                                        isPromptShowing = true
+                                    end
+                                    
+                                    if IsControlJustReleased(0, 38) then -- Phím E
+                                        TriggerEvent("qb-mechanicjob:client:Preview:Menu")
+                                    end
+                                else
+                                    if isPromptShowing then
+                                        lib.hideTextUI()
+                                        isPromptShowing = false
+                                    end
+                                end
+                            end
+                        else
+                            -- Nếu người chơi không ở trong xe, ẩn thông báo tương tác
+                            if isPromptShowing then
+                                lib.hideTextUI()
+                                isPromptShowing = false
+                            end
                         end
                     else
-                        if isPromptShowing then
+                         if isPromptShowing then
                             lib.hideTextUI()
                             isPromptShowing = false
                         end
                     end
-                else
-                    if isPromptShowing then
-                        lib.hideTextUI()
-                        isPromptShowing = false
-                    end
+                    Wait(sleep)
                 end
-            else
-                if isPromptShowing then
-                    lib.hideTextUI()
-                    isPromptShowing = false
-                end
-            end
+            end)
         end
-        Wait(sleep)
     end
-end)
-
-CreateThread(function()
-    if not Config.PreviewSpot2 or not Config.PreviewSpot2.enabled then
-        return
-    end
-
-    local isPromptShowing = false
-    while true do
-        local sleep = 1000
-        local playerPed = PlayerPedId()
-
-        if PlayerData and PlayerData.job then
-            local spotCfg = Config.PreviewSpot2
-            local playerCoords = GetEntityCoords(playerPed)
-            local dist = #(playerCoords - spotCfg.coords)
-
-            if dist < spotCfg.marker.drawDist then
-                sleep = 5
-                
-                if IsPedInAnyVehicle(playerPed, false) then
-                    local vehicle = GetVehiclePedIsIn(playerPed, false)
-                    
-                    if spotCfg.marker and spotCfg.marker.enabled then
-                        DrawMarker(
-                            spotCfg.marker.type,
-                            spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z + spotCfg.marker.zOffset,
-                            0.0, 0.0, 0.0, 0.0, 180.0, 0.0,
-                            spotCfg.marker.size.x, spotCfg.marker.size.y, spotCfg.marker.size.z,
-                            spotCfg.marker.color.r, spotCfg.marker.color.g, spotCfg.marker.color.b, spotCfg.marker.color.a,
-                            false, true, 2, nil, nil, false
-                        )
-                    end
-
-                    if dist < spotCfg.interaction.radius and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                        if not isPromptShowing then
-                            lib.showTextUI('[E] - ' .. spotCfg.interaction.label)
-                            isPromptShowing = true
-                        end
-                        
-                        if IsControlJustReleased(0, 38) then -- Phím E
-                            TriggerEvent("qb-mechanicjob:client:Preview:Menu")
-                        end
-                    else
-                        if isPromptShowing then
-                            lib.hideTextUI()
-                            isPromptShowing = false
-                        end
-                    end
-                else
-                    if isPromptShowing then
-                        lib.hideTextUI()
-                        isPromptShowing = false
-                    end
-                end
-            else
-                if isPromptShowing then
-                    lib.hideTextUI()
-                    isPromptShowing = false
-                end
-            end
-        end
-        Wait(sleep)
-    end
-end)
-
-CreateThread(function()
-    if not Config.PreviewSpot3 or not Config.PreviewSpot3.enabled then
-        return
-    end
-
-    local isPromptShowing = false
-    while true do
-        local sleep = 1000
-        local playerPed = PlayerPedId()
-
-        if PlayerData and PlayerData.job then
-            local spotCfg = Config.PreviewSpot3
-            local playerCoords = GetEntityCoords(playerPed)
-            local dist = #(playerCoords - spotCfg.coords)
-
-            if dist < spotCfg.marker.drawDist then
-                sleep = 5
-                
-                if IsPedInAnyVehicle(playerPed, false) then
-                    local vehicle = GetVehiclePedIsIn(playerPed, false)
-                    
-                    if spotCfg.marker and spotCfg.marker.enabled then
-                        DrawMarker(
-                            spotCfg.marker.type,
-                            spotCfg.coords.x, spotCfg.coords.y, spotCfg.coords.z + spotCfg.marker.zOffset,
-                            0.0, 0.0, 0.0, 0.0, 180.0, 0.0,
-                            spotCfg.marker.size.x, spotCfg.marker.size.y, spotCfg.marker.size.z,
-                            spotCfg.marker.color.r, spotCfg.marker.color.g, spotCfg.marker.color.b, spotCfg.marker.color.a,
-                            false, true, 2, nil, nil, false
-                        )
-                    end
-
-                    if dist < spotCfg.interaction.radius and GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                        if not isPromptShowing then
-                            lib.showTextUI('[E] - ' .. spotCfg.interaction.label)
-                            isPromptShowing = true
-                        end
-                        
-                        if IsControlJustReleased(0, 38) then -- Phím E
-                            TriggerEvent("qb-mechanicjob:client:Preview:Menu")
-                        end
-                    else
-                        if isPromptShowing then
-                            lib.hideTextUI()
-                            isPromptShowing = false
-                        end
-                    end
-                else
-                    if isPromptShowing then
-                        lib.hideTextUI()
-                        isPromptShowing = false
-                    end
-                end
-            else
-                if isPromptShowing then
-                    lib.hideTextUI()
-                    isPromptShowing = false
-                end
-            end
-        end
-        Wait(sleep)
-    end
-end)
+end

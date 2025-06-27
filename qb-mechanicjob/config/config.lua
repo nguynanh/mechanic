@@ -77,15 +77,21 @@ Config.EnableScreen = true
 
 -- Cấu hình trạm nạp NOS
 Config.NosRefillStation = {
-    coords = vector3(-228.15, -1334.16, 30.89),
-    blip = { colour = 75, id = 569, scale = 0.8 },
-     polyzone = { -- <-- THÊM MỤC NÀY
-            vector2(-189.07, -1311.31),
-            vector2(-188.36, -1343.46),
-            vector2(-217.37, -1343.54),
-            vector2(-244.44, -1342.33),
-            vector2(-244.07, -1312.06)
-       },
+    coords = vector3(-228.66, -1334.28, 31.06),
+    blip = {
+        enabled = false, -- << ĐẶT THÀNH FALSE ĐỂ TẮT BLIP TRÊN BẢN ĐỒ
+        colour = 75,
+        id = 569,
+        scale = 0.8
+    },
+    marker = {
+        enabled = true, -- Đặt thành true để BẬT marker 3D
+        drawDist = 25.0,
+        type = 23,
+        size = { x = 0.5, y = 0.5, z = 0.25 },
+        color = { r = 10, g = 200, b = 10, a = 100 },
+        zOffset = -1.15
+    },
     target = {
         item = "noscan",
         icon = "fas fa-gas-pump",
@@ -105,98 +111,56 @@ Config.DiscordColour = 16753920
 
 -- tệp: qb-mechanicjob/config.lua
 
-Config.PreviewSpot = {
-    enabled = true,
-    coords = vector3(-211.72, -1324.1, 30.27),
-    
-    -- Cài đặt cho tương tác "Nhấn E"
-    interaction = {
-        radius = 3.0,
-        label = "Xem trước tùy chỉnh",
-        icon = "fas fa-eye",
-    },
-
-    -- Cài đặt cho Marker hiển thị trên mặt đất
-    marker = {
+Config.PreviewSpots = {
+    -- Địa điểm 1 (Benny's)
+    {
         enabled = true,
-        drawDist = 20.0,
-        type = 23,
-        size = { x = 3.0, y = 3.0, z = 0.5 },
-        color = { r = 255, g = 0, b = 0, a = 100 },
-        zOffset = -0.35
+        coords = vector3(-211.72, -1324.1, 30.27),
+        interaction = {
+            radius = 3.0,
+            label = "Xem trước tùy chỉnh",
+            icon = "fas fa-eye",
+        },
+        marker = {
+            enabled = true,
+            drawDist = 20.0,
+            type = 23,
+            size = { x = 3.0, y = 3.0, z = 0.5 },
+            color = { r = 255, g = 0, b = 0, a = 100 },
+            zOffset = -0.35
+        },
+        blip = {
+            enabled = false,
+            sprite = 72, -- Icon Benny's
+            display = 4,
+            scale = 0.7,
+            color = 46,
+            label = "Điểm Xem Trước Xe (Benny's)"
+        }
     },
-
-    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
-    blip = {
-        enabled = true, -- Đặt thành false để tắt blip
-        sprite = 15,    -- ID của icon blip (72 là icon của Benny's)
-        display = 4,    -- Cách hiển thị (4 là luôn luôn)
-        scale = 0.7,    -- Kích thước blip
-        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
-        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
-    }
-}
-
-Config.PreviewSpot2 = {
-    enabled = true,
-    coords = vector3(-181.5, -1289.33, 31.36),
-    
-    -- Cài đặt cho tương tác "Nhấn E"
-    interaction = {
-        radius = 3.0,
-        label = "Xem trước tùy chỉnh",
-        icon = "fas fa-eye",
-    },
-
-    -- Cài đặt cho Marker hiển thị trên mặt đất
-    marker = {
+    -- Địa điểm 2 benny 2
+    {
         enabled = true,
-        drawDist = 20.0,
-        type = 23,
-        size = { x = 3.0, y = 3.0, z = 0.5 },
-        color = { r = 255, g = 0, b = 0, a = 100 },
-        zOffset = -0.35
+        coords = vector3(-222.76, -1326.47, 30.47),
+        interaction = { radius = 3.0, label = "Xem trước tùy chỉnh", icon = "fas fa-eye" },
+        marker = { enabled = true, drawDist = 20.0, type = 23, size = { x = 3.0, y = 3.0, z = 0.5 }, color = { r = 255, g = 0, b = 0, a = 100 }, zOffset = -0.55 },
+        blip = { enabled = false, sprite = 67, display = 4, scale = 0.7, color = 46, label = "Điểm Xem Trước Xe" }
     },
-
-    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
-    blip = {
-        enabled = true, -- Đặt thành false để tắt blip
-        sprite = 67,    -- ID của icon blip (72 là icon của Benny's)
-        display = 4,    -- Cách hiển thị (4 là luôn luôn)
-        scale = 0.7,    -- Kích thước blip
-        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
-        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
-    }
-}
-
-Config.PreviewSpot3 = {
-    enabled = true,
-    coords = vector3(-1272.66, -3383.02, 14.54),
-    
-    -- Cài đặt cho tương tác "Nhấn E"
-    interaction = {
-        radius = 3.0,
-        label = "Xem trước tùy chỉnh",
-        icon = "fas fa-eye",
-    },
-
-    -- Cài đặt cho Marker hiển thị trên mặt đất
-    marker = {
+    -- Địa điểm 3 (Gần Pillbox)
+    {
         enabled = true,
-        drawDist = 20.0,
-        type = 23,
-        size = { x = 6.0, y = 6.0, z = 0.5 },
-        color = { r = 255, g = 0, b = 0, a = 100 },
-        zOffset = -1.5
+        coords = vector3(-181.5, -1289.33, 31.36),
+        interaction = { radius = 3.0, label = "Xem trước tùy chỉnh", icon = "fas fa-eye" },
+        marker = { enabled = true, drawDist = 20.0, type = 23, size = { x = 3.0, y = 3.0, z = 0.5 }, color = { r = 255, g = 0, b = 0, a = 100 }, zOffset = -0.95 },
+        blip = { enabled = true, sprite = 67, display = 4, scale = 0.7, color = 46, label = "Điểm Xem Trước Xe" }
+    },
+    -- Địa điểm 4 (Sân bay LSIA)
+    {
+        enabled = false,
+        coords = vector3(-1272.66, -3383.02, 14.54),
+        interaction = { radius = 3.0, label = "Xem trước tùy chỉnh", icon = "fas fa-eye" },
+        marker = { enabled = true, drawDist = 20.0, type = 23, size = { x = 6.0, y = 6.0, z = 0.5 }, color = { r = 255, g = 0, b = 0, a = 100 }, zOffset = -1.5 },
+        blip = { enabled = true, sprite = 90, display = 4, scale = 0.7, color = 46, label = "Điểm Xem Trước Xe" }
     },
 
-    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
-    blip = {
-        enabled = true, -- Đặt thành false để tắt blip
-        sprite = 90,    -- ID của icon blip (72 là icon của Benny's)
-        display = 4,    -- Cách hiển thị (4 là luôn luôn)
-        scale = 0.7,    -- Kích thước blip
-        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
-        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
-    }
-}
+}    
