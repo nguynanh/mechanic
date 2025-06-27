@@ -480,42 +480,7 @@ QBCore.Functions.CreateUseableItem("mechboard", function(source, item)
 	end
 end)
 
---Create Usable Items do xe moi
-QBCore.Functions.CreateUseableItem("car_armor", function(source, item) TriggerClientEvent('qb-mechanicjob:client:applyArmour', source) end)
-QBCore.Functions.CreateUseableItem("turbo", function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyTurbo", source) end)
-QBCore.Functions.CreateUseableItem("headlights", function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyXenons", source) end)
-QBCore.Functions.CreateUseableItem("underglow_controller", function(source, item) TriggerClientEvent('qb-mechanicjob:client:neonMenu', source) end)
-QBCore.Functions.CreateUseableItem("toolbox", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Menu', source) end)
-QBCore.Functions.CreateUseableItem("mechanic_tools", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Repair:Check', source) end)
-QBCore.Functions.CreateUseableItem("seat", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Seat:Check', source) end)
-QBCore.Functions.CreateUseableItem("internals", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Interior:Check', source) end)
-QBCore.Functions.CreateUseableItem("externals", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Exterior:Check', source) end)
-QBCore.Functions.CreateUseableItem("rims", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Rims:Check', source) end)
-QBCore.Functions.CreateUseableItem("exhaust", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Exhaust:Check', source) end)
-QBCore.Functions.CreateUseableItem("horn", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Horn:Check', source) end)
-QBCore.Functions.CreateUseableItem("livery", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Livery:Check', source) end)
-QBCore.Functions.CreateUseableItem("tires", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Tires:Check', source) end)
-QBCore.Functions.CreateUseableItem("skirts", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Skirts:Check', source) end)
-QBCore.Functions.CreateUseableItem("spoiler", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Spoilers:Check', source) end)
-QBCore.Functions.CreateUseableItem("roof", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Roof:Check', source) end)
-QBCore.Functions.CreateUseableItem("rollcage", function(source, item) TriggerClientEvent('qb-mechanicjob:client:RollCage:Check', source) end)
-QBCore.Functions.CreateUseableItem("hood", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Hood:Check', source) end)
-QBCore.Functions.CreateUseableItem("bumper", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Bumpers:Check', source) end)
-QBCore.Functions.CreateUseableItem("customplate", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Plates:Check', source) end)
-QBCore.Functions.CreateUseableItem("cleaningkit", function(source, item) TriggerClientEvent('qb-mechanicjob:client:cleanVehicle', source, true) end)
-QBCore.Functions.CreateUseableItem("tint_supplies", function(source, item) TriggerClientEvent('qb-mechanicjob:client:Windows:Check', source) end)
-QBCore.Functions.CreateUseableItem("ducttape", function(source, item) TriggerClientEvent("qb-mechanicjob:quickrepair", source) end)
-QBCore.Functions.CreateUseableItem("bprooftires", function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyBulletProof", source) end)
-QBCore.Functions.CreateUseableItem("drifttires", function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyDrift", source) end)
-QBCore.Functions.CreateUseableItem("nos", function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyNOS", source) end)
-
-for i = 1, 5 do
-	QBCore.Functions.CreateUseableItem("suspension"..i, function(source, item) TriggerClientEvent("qb-mechanicjob:client:applySuspension", source, i-1) end)
-	QBCore.Functions.CreateUseableItem("engine"..i, function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyEngine", source, i-1) end)
-end
-for i = 1, 4 do
-	QBCore.Functions.CreateUseableItem("transmission"..i, function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyTransmission", source, i-1) end)
-end
-for i = 1, 3 do
-	QBCore.Functions.CreateUseableItem("brakes"..i, function(source, item) TriggerClientEvent("qb-mechanicjob:client:applyBrakes", source, i-1) end)
-end
+--QBCore.Commands.Add("preview", "Xem trước các tùy chỉnh xe", {}, false, function(source)
+--    -- TÊN SỰ KIỆN NÀY PHẢI ĐÚNG
+--  --  TriggerClientEvent("qb-mechanicjob:client:Preview:Menu", source) 
+--end, "user")

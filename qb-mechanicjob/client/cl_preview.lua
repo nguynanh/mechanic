@@ -71,7 +71,7 @@ local function printDifferences(vehicle, properties, newproperties)
 	-- qblog("Finished Previewing: [**"..Trim(GetVehicleNumberPlateText(vehicle)).."**]")
 
 	local veh = searchCar(vehicle)
-	local vehplate = "["..trim(properties.plate).."]"
+	local vehplate = "["..Trim(properties.plate).."]"
 	-- Khôi phục lại màu kính gốc để tránh lỗi hiển thị
 	SetVehicleWindowTint(vehicle, properties["windowTint"])
 
@@ -167,7 +167,7 @@ local function startPreviewSession(playerPed, vehicle)
     previewing = true
 
     QBCore.Functions.Notify("Bắt đầu chế độ xem trước. Ra khỏi xe hoặc nhấn ESC để hoàn tất.", "primary")
-    TriggerServerEvent("qb-mechanicjob:server:preview", true, VehToNet(vehicle), trim(GetVehicleNumberPlateText(vehicle)))
+    TriggerServerEvent("qb-mechanicjob:server:preview", true, VehToNet(vehicle), Trim(GetVehicleNumberPlateText(vehicle)))
     FreezeEntityPosition(vehicle, true)
     originalProperties = QBCore.Functions.GetVehicleProperties(vehicle)
 
@@ -208,7 +208,7 @@ RegisterNetEvent('qb-mechanicjob:client:Preview:Menu', function()
     local vehicle = GetVehiclePedIsUsing(playerPed)
     pushVehicle(vehicle)
     
-    local headerText = searchCar(vehicle) .. "<br>Class: " .. getClass(vehicle) .. "<br>" .. Lang:t("check.plate") .. (trim(GetVehicleNumberPlateText(vehicle)) or 'N/A') .. "]<br>Value: " .. searchPrice(vehicle)
+    local headerText = searchCar(vehicle) .. "<br>Class: " .. getClass(vehicle) .. "<br>" .. Lang:t("check.plate") .. (Trim(GetVehicleNumberPlateText(vehicle)) or 'N/A') .. "]<br>Value: " .. searchPrice(vehicle)
 
     local previewMenu = {
         { isMenuHeader = true, header = "Chế độ xem trước", txt = headerText },
