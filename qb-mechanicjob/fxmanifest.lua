@@ -1,7 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
-author 'Merged by Nguyn Anh '
+author 'Kakarot & Jimathy (Merged by Nguyn Anh & Gemini)'
 description 'Custom Mechanic Job - Unified Version'
 version '5.0.0'
 
@@ -20,9 +20,9 @@ client_scripts {
     'client/drivingdistance.lua',
     'client/performance.lua',
     'client/repair.lua',
+    'client/tunerchip.lua',
     'client/cl_nos.lua',
-    'client/cl_preview.lua',
-    'client/tuning_tablet.lua' -- Thêm tệp preview
+    'client/cl_preview.lua' -- Thêm tệp preview
 }
 
 server_scripts {
@@ -31,16 +31,10 @@ server_scripts {
     'server/sv_nos.lua' -- Tách biệt logic NOS
 }
 
-ui_page "web/index.html"
+ui_page 'html/index.html'
 
 files {
-    'html/index.html',
-    'html/js/main.js',
-    'html/js/vue.min.js',
-    'html/assets/css/style.css',
-    'html/assets/css/tuning.css',
-    'html/assets/css/notify.css',
-    'html/assets/img/tuning/*.png',
+    'html/*',
     'carcols_gen9.meta',
     'carmodcols_gen9.meta'
 }
