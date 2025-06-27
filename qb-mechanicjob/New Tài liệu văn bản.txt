@@ -1,0 +1,7 @@
+ALTER TABLE `player_vehicles`
+ADD COLUMN `nosColour` TEXT NULL DEFAULT NULL,
+ADD COLUMN `traveldistance` INT(50) NULL DEFAULT 0,
+ADD COLUMN `noslevel` INT(10) NULL DEFAULT 0,
+ADD COLUMN `hasnitro` TINYINT(0) NULL DEFAULT 0;
+
+file qls them tinh nang mechanic

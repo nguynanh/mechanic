@@ -1,197 +1,427 @@
-local function GetArmor(vehicle)
-    local armorMenu = { { header = 'Armor', isMenuHeader = true, icon = 'fas fa-shield' } }
-    for i = -1, GetNumVehicleMods(vehicle, 16) - 1 do
-        local header = Lang:t('menu.armor') .. ': ' .. (i >= 0 and i or Lang:t('menu.stock'))
-        local disabled = GetVehicleMod(vehicle, 16) == i
-        local armorItem = {
-            header = header,
-            disabled = disabled,
-            params = {
-                event = 'qb-mechanicjob:client:install',
-                args = {
-                    upgradeType = 'armor',
-                    modType = 16,
-                    upgradeIndex = i,
-                    vehicle = vehicle
-                }
-            }
-        }
-        armorMenu[#armorMenu + 1] = armorItem
-    end
-    exports['qb-menu']:openMenu(armorMenu, true)
-end
+local QBCore = exports['qb-core']:GetCoreObject()
+RegisterNetEvent('QBCore:Client:UpdateObject', function() QBCore = exports['qb-core']:GetCoreObject() end)
 
-local function GetBrakes(vehicle)
-    local brakesMenu = { { header = 'Brakes', isMenuHeader = true, icon = 'fas fa-car' } }
-    for i = -1, GetNumVehicleMods(vehicle, 12) - 1 do
-        local header = Lang:t('menu.brakes') .. ': ' .. (i >= 0 and i or Lang:t('menu.stock'))
-        local disabled = GetVehicleMod(vehicle, 12) == i
-        local brakesItem = {
-            header = header,
-            disabled = disabled,
-            params = {
-                event = 'qb-mechanicjob:client:install',
-                args = {
-                    upgradeType = 'brakes',
-                    modType = 12,
-                    upgradeIndex = i,
-                    vehicle = vehicle
-                }
-            }
-        }
-        brakesMenu[#brakesMenu + 1] = brakesItem
-    end
-    exports['qb-menu']:openMenu(brakesMenu, true)
-end
-
-local function GetEngine(vehicle)
-    local engineMenu = { { header = 'Engine', isMenuHeader = true, icon = 'fas fa-oil-can' } }
-    for i = -1, GetNumVehicleMods(vehicle, 11) - 1 do
-        local header = Lang:t('menu.engine') .. ': ' .. (i >= 0 and i or Lang:t('menu.stock'))
-        local disabled = GetVehicleMod(vehicle, 11) == i
-        local engineItem = {
-            header = header,
-            disabled = disabled,
-            params = {
-                event = 'qb-mechanicjob:client:install',
-                args = {
-                    upgradeType = 'engine',
-                    modType = 11,
-                    upgradeIndex = i,
-                    vehicle = vehicle
-                }
-            }
-        }
-        engineMenu[#engineMenu + 1] = engineItem
-    end
-    exports['qb-menu']:openMenu(engineMenu, true)
-end
-
-local function GetSuspension(vehicle)
-    local suspensionMenu = { { header = 'Suspension', isMenuHeader = true, icon = 'fas fa-car' } }
-    for i = -1, GetNumVehicleMods(vehicle, 15) - 1 do
-        local header = Lang:t('menu.suspension') .. ': ' .. (i >= 0 and i or Lang:t('menu.stock'))
-        local disabled = GetVehicleMod(vehicle, 15) == i
-        local suspensionItem = {
-            header = header,
-            disabled = disabled,
-            params = {
-                event = 'qb-mechanicjob:client:install',
-                args = {
-                    upgradeType = 'suspension',
-                    modType = 15,
-                    upgradeIndex = i,
-                    vehicle = vehicle
-                }
-            }
-        }
-        suspensionMenu[#suspensionMenu + 1] = suspensionItem
-    end
-    exports['qb-menu']:openMenu(suspensionMenu, true)
-end
-
-local function GetTransmission(vehicle)
-    local transmissionMenu = { { header = 'Transmission', isMenuHeader = true, icon = 'fas fa-oil-can' } }
-    for i = -1, GetNumVehicleMods(vehicle, 13) - 1 do
-        local header = Lang:t('menu.transmission') .. ': ' .. (i >= 0 and i or Lang:t('menu.stock'))
-        local disabled = GetVehicleMod(vehicle, 13) == i
-        local transmissionItem = {
-            header = header,
-            disabled = disabled,
-            params = {
-                event = 'qb-mechanicjob:client:install',
-                args = {
-                    upgradeType = 'transmission',
-                    modType = 13,
-                    upgradeIndex = i,
-                    vehicle = vehicle
-                }
-            }
-        }
-        transmissionMenu[#transmissionMenu + 1] = transmissionItem
-    end
-    exports['qb-menu']:openMenu(transmissionMenu, true)
-end
-
-local function GetTurbo(vehicle)
-    local turboMenu = { { header = Lang:t('menu.turbo'), isMenuHeader = true, icon = 'fas fa-bolt' } }
-    local txt = Lang:t('menu.install_turbo')
-    local turbo = IsToggleModOn(vehicle, 18)
-    if turbo then txt = Lang:t('menu.uninstall_turbo') end
-    local turboItem = {
-        header = Lang:t('menu.turbo'),
-        txt = txt,
-        params = {
-            event = 'qb-mechanicjob:client:install',
-            args = {
-                upgradeType = 'turbo',
-                turbo = turbo,
-                vehicle = vehicle
-            }
-        }
-    }
-    turboMenu[#turboMenu + 1] = turboItem
-    exports['qb-menu']:openMenu(turboMenu, true)
-end
-
--- Events
-
-RegisterNetEvent('qb-mechanicjob:client:install', function(data)
-    local upgradeIndex = data.upgradeIndex
-    local modType = data.modType
-    local partName = data.upgradeType
-    local animDict = 'mini@repair'
-    local anim = 'fixing_a_player'
-    local shouldToggleHood = false
-    if partName == 'engine' or partName == 'transmission' or partName == 'turbo' then
-        shouldToggleHood = true
-    elseif partName == 'armor' or partName == 'brakes' or partName == 'suspension' then
-        animDict = 'anim@amb@clubhouse@tutorial@bkr_tut_ig3@'
-        anim = 'machinic_loop_mechandplayer'
-    end
-    QBCore.Functions.Progressbar('mechanic_install', string.format(Lang:t('progress.installing'), partName), 5000, false, true, {
-        disableMovement = true,
-        disableCarMovement = true,
-        disableMouse = false,
-        disableCombat = true,
-    }, {
-        animDict = animDict,
-        anim = anim,
-        flags = 1,
-    }, {
-        model = 'imp_prop_impexp_span_03',
-        bone = 28422,
-        coords = vec3(0.06, 0.01, -0.02),
-        rotation = vec3(0.0, 0.0, 0.0),
-    }, {}, function()
-        if partName == 'turbo' then
-            ToggleVehicleMod(data.vehicle, 18, not data.turbo)
-        else
-            SetVehicleMod(data.vehicle, modType, upgradeIndex, false)
-        end
-        if shouldToggleHood then ToggleHood(data.vehicle) end
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', 'veh_' .. partName)
-        QBCore.Functions.Notify(string.format(Lang:t('success.installed'), partName), 'success')
-    end, function()
-        if shouldToggleHood then ToggleHood(data.vehicle) end
-    end)
+			--=== AMROUR ===--
+RegisterNetEvent('jim-mechanic:client:applyArmour', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then	vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) lookVeh(vehicle) end
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if DoesEntityExist(vehicle) then
+		if GetNumVehicleMods(vehicle, 16) == 0 then	triggerNotify(nil, Loc[Config.Lan]["armour"].cant, "error") return end
+		if GetVehicleMod(vehicle, 16)+1 == GetNumVehicleMods(vehicle, 16) then triggerNotify(nil, Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			SetVehicleDoorOpen(vehicle, 4, false, false)
+			QBCore.Functions.Progressbar("drink_something", Loc[Config.Lan]["armour"].install, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+			{ animDict = "mini@repair", anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (GetVehicleMod(vehicle, 16) == GetNumVehicleMods(vehicle, 16)-1) or (not HasItem("car_armor")) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "car_armor") emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["car_armor"].label.." - car_armor` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				SetVehicleMod(vehicle, 16, GetNumVehicleMods(vehicle, 16)-1)
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+				updateCar(vehicle)
+				toggleItem(false, "car_armor")
+				triggerNotify(nil, Loc[Config.Lan]["armour"].installed, "success")
+			end, function() -- Cancel
+				triggerNotify(nil, Loc[Config.Lan]["armour"].failed, "success")
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+			end, "car_armor")
+		end
+	end
+end)
+RegisterNetEvent('jim-mechanic:client:giveArmor', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle)	lookVeh(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	SetVehicleDoorOpen(vehicle, 4, false, false)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["armour"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+	{ animDict = "mini@repair", anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+		if (GetVehicleMod(vehicle, 16) == -1) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "car armor") emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["car_armor"].label.." - car_armor` removed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		SetVehicleMod(vehicle, 16, -1)
+		SetVehicleDoorShut(vehicle, 4, false)
+		updateCar(vehicle)
+		toggleItem(true, "car_armor")
+		triggerNotify(nil, Loc[Config.Lan]["armour"].removed, "success")
+		emptyHands(PlayerPedId())
+	end, function()
+		triggerNotify(nil, Loc[Config.Lan]["armour"].remfail, "error")
+		emptyHands(PlayerPedId())
+	end, "car_armor")
 end)
 
-RegisterNetEvent('qb-mechanicjob:client:installPart', function(item)
-    local vehicle, distance = QBCore.Functions.GetClosestVehicle()
-    if vehicle == 0 or distance > 5.0 then return end
-    if GetVehicleModKit(vehicle) ~= 0 then SetVehicleModKit(vehicle, 0) end
-    if item == 'veh_armor' or item == 'veh_brakes' or item == 'veh_suspension' then
-        if GetClosestWheel(vehicle) == -1 then return end
-        if item == 'veh_armor' then GetArmor(vehicle) end
-        if item == 'veh_brakes' then GetBrakes(vehicle) end
-        if item == 'veh_suspension' then GetSuspension(vehicle) end
-    elseif item == 'veh_engine' or item == 'veh_transmission' or item == 'veh_turbo' then
-        if IsPedInAnyVehicle(PlayerPedId(), false) then return end
-        if not IsNearBone(vehicle, 'engine') then return end
-        if GetVehicleDoorAngleRatio(vehicle, 4) <= 0.0 then SetVehicleDoorOpen(vehicle, 4, false, false) end
-        if item == 'veh_engine' then GetEngine(vehicle) end
-        if item == 'veh_transmission' then GetTransmission(vehicle) end
-        if item == 'veh_turbo' then GetTurbo(vehicle) end
-    end
+			--=== BRAKES ===--
+RegisterNetEvent('jim-mechanic:client:applyBrakes', function(level)
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	local vehicle = nil
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then	vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if lockedCar(vehicle) then return end
+	if DoesEntityExist(vehicle) then
+		local found = false
+		for _, v in pairs({"wheel_lf","wheel_rf","wheel_lm1","wheel_rm1","wheel_lm2","wheel_rm2","wheel_lm3","wheel_rm3","wheel_lr", "wheel_rr"}) do
+			if #(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 1.2 then
+				lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+				found = true
+				break
+			end
+		end
+		if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearwheel, "error") return end
+		local currentBrakes = GetVehicleMod(vehicle, 12)
+		if GetNumVehicleMods(vehicle, 12) == 0 or level > GetNumVehicleMods(vehicle, 12) then triggerNotify(nil, Loc[Config.Lan]["brakes"].cant, "error") return end
+		if GetVehicleMod(vehicle, 12) == level then triggerNotify(nil, QBCore.Shared.Items["brakes"..level].label.." "..Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["common"].installing.."LVL: "..level+1, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+			{ animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", anim = "machinic_loop_mechandplayer", flags = 8, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (GetVehicleMod(vehicle, 12) ~= currentBrakes) or (not HasItem("brakes"..(level+1))) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "brakes"..(currentBrakes+1)) emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["brakes"..level+1].label.." - brakes"..level+1 .."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				SetVehicleMod(vehicle, 12, level)
+				updateCar(vehicle)
+				TriggerServerEvent('jim-mechanic:server:swapItem', level, currentBrakes, "brakes")
+				triggerNotify(nil, Loc[Config.Lan]["brakes"].installed, "success")
+				emptyHands(PlayerPedId())
+			end, function() -- Cancel
+				triggerNotify(nil, Loc[Config.Lan]["brakes"].failed, "error")
+				emptyHands(PlayerPedId())
+			end, "brakes"..level+1)
+		end
+	end
+end)
+RegisterNetEvent('jim-mechanic:client:giveBrakes', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) lookVeh(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	local found = false
+	for _, v in pairs({"wheel_lf","wheel_rf","wheel_lm1","wheel_rm1","wheel_lm2","wheel_rm2","wheel_lm3","wheel_rm3","wheel_lr", "wheel_rr"}) do
+		if #(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 1.2 then
+			lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+			found = true
+			break
+		end
+	end
+	if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearwheel, "error") return end
+	local currentBrakes = GetVehicleMod(vehicle, 12)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["brakes"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true,	disableMouse = false, disableCombat = false, },
+	{ animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", anim = "machinic_loop_mechandplayer", flags = 8, }, {}, {}, function()
+		if (GetVehicleMod(vehicle, 12) ~= currentBrakes) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "brakes"..(currentBrakes+1)) emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["brakes"..currentBrakes+1].label.." - brakes"..currentBrakes+1 .."` removed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		SetVehicleMod(vehicle, 12, -1)
+		updateCar(vehicle)
+		TriggerServerEvent('jim-mechanic:server:swapItem', nil, currentBrakes, "brakes")
+		triggerNotify(nil, Loc[Config.Lan]["brakes"].remove, "success")
+		emptyHands(PlayerPedId())
+	end, function() -- Cancel
+		emptyHands(PlayerPedId())
+		triggerNotify(nil, Loc[Config.Lan]["brakes"].remfail, "error")
+	end, "brakes"..currentBrakes+1)
+end)
+
+			--=== SUSPENSION ===--
+RegisterNetEvent('jim-mechanic:client:applySuspension', function(level)
+	if not jobChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) end
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if DoesEntityExist(vehicle) then
+		local found = false
+		for _, v in pairs({"wheel_lf","wheel_rf","wheel_lm1","wheel_rm1","wheel_lm2","wheel_rm2","wheel_lm3","wheel_rm3","wheel_lr", "wheel_rr"}) do
+			if #(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 1.5 then
+				lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+				found = true
+				break
+			end
+		end
+		if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearwheel, "error") return end
+		local currentSuspension = GetVehicleMod(vehicle, 15)
+		if (GetNumVehicleMods(vehicle, 15) == 0 and (level+1) > GetNumVehicleMods(vehicle, 15)) then triggerNotify(nil, Loc[Config.Lan]["suspension"].cant, "error") return end
+		if currentSuspension == level then triggerNotify(nil, QBCore.Shared.Items["suspension"..level+1].label.." "..Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			QBCore.Functions.Progressbar("drink_something", Loc[Config.Lan]["common"].installing.."LVL: "..level+1, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = true, },
+			{ animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", anim = "machinic_loop_mechandplayer", flags = 8, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (GetVehicleMod(vehicle, 15) ~= currentSuspension) or (not HasItem("suspension"..level+1)) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "suspension"..(currentSuspension+1)) emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["suspension"..(level+1)].label.." - suspension"..(level+1).."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				SetVehicleMod(vehicle, 15, level)
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+				updateCar(vehicle)
+				TriggerServerEvent('jim-mechanic:server:swapItem', level, currentSuspension, "suspension")
+				triggerNotify(nil, Loc[Config.Lan]["suspension"].installed, "success")
+			end, function()
+				triggerNotify(nil, Loc[Config.Lan]["suspension"].failed, "error")
+				emptyHands(PlayerPedId())
+			end, "suspension"..level+1)
+		end
+	end
+end)
+
+RegisterNetEvent('jim-mechanic:client:giveSuspension', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	for _, v in pairs({"wheel_lf","wheel_rf","wheel_lm1","wheel_rm1","wheel_lm2","wheel_rm2","wheel_lm3","wheel_rm3","wheel_lr", "wheel_rr"}) do
+		if #(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 1.2 then
+			lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+			found = true
+			break
+		end
+	end
+	if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearwheel, "error") return end
+	local currentSuspension = GetVehicleMod(vehicle, 15)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["suspension"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+	{ animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", anim = "machinic_loop_mechandplayer", flags = 8, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+		if (GetVehicleMod(vehicle, 15) ~= currentSuspension) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "suspension"..(currentSuspension+1)) emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["suspension"..(currentSuspension+1)].label.." - suspension"..(currentSuspension+1).."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		SetVehicleMod(vehicle, 15, -1)
+		updateCar(vehicle)
+		TriggerServerEvent('jim-mechanic:server:swapItem', nil, currentSuspension, "suspension")
+		triggerNotify(nil, Loc[Config.Lan]["suspension"].removed, "success")
+		emptyHands(PlayerPedId())
+	end, function() -- Cancel
+		triggerNotify(nil, Loc[Config.Lan]["suspension"].remfail, "error")
+		emptyHands(PlayerPedId())
+	end, "suspension"..currentSuspension+1)
+end)
+			--=== TRANSMISSION ===--
+RegisterNetEvent('jim-mechanic:client:applyTransmission', function(level)
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	local vehicle
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) end
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if DoesEntityExist(vehicle) then
+		local found = false
+		for _, v in pairs({"engine"}) do
+			if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+				lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+				found = true
+				break
+			else found = true end
+		end
+		if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+		local currentTrans = GetVehicleMod(vehicle, 13)
+		if (GetNumVehicleMods(vehicle, 13) == 0 or (level+1) > GetNumVehicleMods(vehicle, 13)) then triggerNotify(nil, Loc[Config.Lan]["transmission"].cant, "error") return end
+		if currentTrans == level then triggerNotify(nil, QBCore.Shared.Items["transmission"..level+1].label.." "..Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			SetVehicleDoorOpen(vehicle, 4, false, false)
+			QBCore.Functions.Progressbar("drink_something", Loc[Config.Lan]["common"].installing.."LVL: "..level+1, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = true, },
+			{ animDict = "mini@repair",	anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (GetVehicleMod(vehicle, 13) ~= currentTrans) or (not HasItem("transmission"..(level+1))) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "transmission"..(currentTrans+1)) emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["transmission"..(level+1)].label.." - transmission"..(level+1).."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				SetVehicleMod(vehicle, 13, level)
+				SetVehicleDoorShut(vehicle, 4, false)
+				updateCar(vehicle)
+				TriggerServerEvent('jim-mechanic:server:swapItem', level, currentTrans, "transmission")
+				TriggerServerEvent('jim-mechanic:server:removeTransmission', level, currentTrans)
+				triggerNotify(nil, Loc[Config.Lan]["transmission"].installed, "success")
+				emptyHands(PlayerPedId())
+			end, function() -- Cancel
+				triggerNotify(nil, Loc[Config.Lan]["transmission"].failed, "error")
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+			end, "transmission"..level+1)
+		end
+	end
+end)
+
+RegisterNetEvent('jim-mechanic:client:giveTransmission', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	local found = false
+	for _, v in pairs({"engine"}) do
+		if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+			lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+			found = true
+			break
+		else found = true end
+	end
+	if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+	local currentTrans = GetVehicleMod(vehicle, 13)
+	SetVehicleDoorOpen(vehicle, 4, false, false)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["transmission"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+	{ animDict = "mini@repair", anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+		if (GetVehicleMod(vehicle, 13) ~= currentTrans) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "transmission"..(currentTrans+1)) emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["transmission"..(currentTrans+1)].label.." - transmission"..(currentTrans+1).."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		SetVehicleMod(vehicle, 13, -1)
+		SetVehicleDoorShut(vehicle, 4, false)
+		updateCar(vehicle)
+		TriggerServerEvent('jim-mechanic:server:swapItem', nil, currentTrans, "transmission")
+		triggerNotify(nil, Loc[Config.Lan]["transmission"].remove, "success")
+		emptyHands(PlayerPedId())
+	end, function() -- Cancel
+		triggerNotify(nil, Loc[Config.Lan]["transmission"].remfail, "error")
+		emptyHands(PlayerPedId())
+	end, "transmission"..currentTrans+1)
+end)
+
+			--=== TURBO ===--
+RegisterNetEvent('jim-mechanic:client:applyTurbo', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	local vehicle
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) end
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if DoesEntityExist(vehicle) then
+		local found = false
+		for _, v in pairs({"engine"}) do
+			if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+				lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+				found = true
+				break
+			else found = true end
+		end
+		if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+		if GetNumVehicleMods(vehicle,11) == 0 then triggerNotify(nil, Loc[Config.Lan]["common"].noOptions, "error") return end
+		if IsToggleModOn(vehicle, 18) then triggerNotify(nil, Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			SetVehicleDoorOpen(vehicle, 4, false, false)
+			QBCore.Functions.Progressbar("drink_something", Loc[Config.Lan]["turbo"].install, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+			{ animDict = "mini@repair",	anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (IsToggleModOn(vehicle, 18)) or (not HasItem("turbo")) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "turbo") emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["turbo"].label.." - turbo` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				ToggleVehicleMod(vehicle, 18, true)
+				SetVehicleDoorShut(vehicle, 4, false)
+				FreezeEntityPosition(PlayerPedId(), false)
+				updateCar(vehicle)
+				toggleItem(false, "turbo")
+				triggerNotify(nil, Loc[Config.Lan]["turbo"].installed, "success")
+				emptyHands(PlayerPedId())
+			end, function() -- Cancel
+				triggerNotify(nil, Loc[Config.Lan]["turbo"].failed, "error")
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+			end, "turbo")
+		end
+	end
+end)
+
+RegisterNetEvent('jim-mechanic:client:giveTurbo', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	local found = false
+	for _, v in pairs({"engine"}) do
+		if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+			lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+			found = true
+			break
+		else found = true end
+	end
+	if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+	SetVehicleDoorOpen(vehicle, 4, false, false)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["turbo"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+	{ animDict = "mini@repair",	anim = "fixing_a_ped", flags = 16, }, {}, {}, function() SetVehicleModKit(vehicle, 0) SetVehicleModKit(vehicle, 0)
+		if (not IsToggleModOn(vehicle, 18)) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "turbo") emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["turbo"].label.." - turbo` removed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		ToggleVehicleMod(vehicle, 18, false)
+		SetVehicleDoorShut(vehicle, 4, false)
+		updateCar(vehicle)
+		toggleItem(true, "turbo")
+		triggerNotify(nil, Loc[Config.Lan]["turbo"].remove, "success")
+		emptyHands(PlayerPedId())
+	end, function() -- Cancel
+		triggerNotify(nil, Loc[Config.Lan]["turbo"].remfail, "error")
+		emptyHands(PlayerPedId())
+	end, "turbo")
+end)
+
+			--=== ENGINES ===--
+RegisterNetEvent('jim-mechanic:client:applyEngine', function(level)
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	if not inCar() then return end
+	if not nearPoint(GetEntityCoords(PlayerPedId())) then return end
+	local vehicle
+	if not IsPedInAnyVehicle(PlayerPedId(), false) then vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle) end
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	if DoesEntityExist(vehicle) then
+		local found = false
+		for _, v in pairs({"engine"}) do
+			if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+				lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+				found = true
+				break
+			else found = true end
+		end
+		if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+		local currentEngine = GetVehicleMod(vehicle, 11)
+		if (GetNumVehicleMods(vehicle, 11) == 0 or (level+1) > GetNumVehicleMods(vehicle, 11)) then triggerNotify(nil, Loc[Config.Lan]["engines"].cant, "error") return end
+		if GetVehicleMod(vehicle, 11) == level then triggerNotify(nil, "LVL: "..(level+1)..Loc[Config.Lan]["common"].already, "error") else
+			SetVehicleEngineOn(vehicle, false, false, true)
+			SetVehicleDoorOpen(vehicle, 4, false, false)
+			QBCore.Functions.Progressbar("drink_something", Loc[Config.Lan]["common"].installing.." LVL: "..level+1, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+			{ animDict = "mini@repair", anim = "fixing_a_ped", flags = 8, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+				if (GetVehicleMod(vehicle, 11) ~= currentEngine) or (not HasItem("engine"..(level+1), 1)) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "engine"..(currentEngine+1)) emptyHands(playerPed) return end
+				qblog("`"..QBCore.Shared.Items["engine"..(level+1)].label.." - engine"..(level+1).."` installed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+				SetVehicleMod(vehicle, 11, level)
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+				updateCar(vehicle)
+				TriggerServerEvent('jim-mechanic:server:swapItem', level, currentEngine, "engine")
+				triggerNotify(nil, Loc[Config.Lan]["engines"].installed, "success")
+			end, function()
+				triggerNotify(nil, Loc[Config.Lan]["engines"].failed, "error")
+				SetVehicleDoorShut(vehicle, 4, false)
+				emptyHands(PlayerPedId())
+			end, "engine"..level+1)
+		end
+	end
+end)
+RegisterNetEvent('jim-mechanic:client:giveEngine', function()
+	if not jobChecks() then return end
+	if not locationChecks() then return end
+	local vehicle = getClosest(GetEntityCoords(PlayerPedId())) pushVehicle(vehicle)
+	if lockedCar(vehicle) then return end
+	if Config.isVehicleOwned and not IsVehicleOwned(trim(GetVehicleNumberPlateText(vehicle))) then triggerNotify(nil, Loc[Config.Lan]["common"].owned, "error") return end
+	local found = false
+	for _, v in pairs({"engine"}) do
+		if (#(GetEntityCoords(PlayerPedId()) - GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v))) <= 2.0) and (GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)) ~= vec3(0,0,0)) then
+			lookVeh(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, v)))
+			found = true
+			break
+		else found = true end
+	end
+	if not found then triggerNotify(nil, Loc[Config.Lan]["common"].nearengine, "error") return end
+	local currentEngine = GetVehicleMod(vehicle, 11)
+	SetVehicleDoorOpen(vehicle, 4, false, false)
+	QBCore.Functions.Progressbar("accepted_key", Loc[Config.Lan]["engines"].removing, math.random(7000,10000), false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = false, },
+	{ animDict = "mini@repair", anim = "fixing_a_ped", flags = 8, }, {}, {}, function() SetVehicleModKit(vehicle, 0)
+		if (GetVehicleMod(vehicle, 11) ~= currentEngine) then TriggerServerEvent("jim-mechanic:server:DupeWarn", "engine"..(currentEngine+1)) emptyHands(playerPed) return end
+		qblog("`"..QBCore.Shared.Items["engine"..(currentEngine+1)].label.." - engine"..(currentEngine+1).."` removed [**"..trim(GetVehicleNumberPlateText(vehicle)).."**]")
+		SetVehicleMod(vehicle, 11, -1)
+		SetVehicleDoorShut(vehicle, 4, false)
+		updateCar(vehicle)
+		TriggerServerEvent('jim-mechanic:server:swapItem', nil, currentEngine, "engine")
+		triggerNotify(nil, Loc[Config.Lan]["engines"].remove, "success")
+		emptyHands(PlayerPedId())
+	end, function() -- Cancel
+		triggerNotify(nil, Loc[Config.Lan]["engines"].remfail, "error")
+		emptyHands(PlayerPedId())
+	end, "engine"..currentEngine+1)
 end)
