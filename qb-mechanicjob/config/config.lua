@@ -136,3 +136,67 @@ Config.PreviewSpot = {
         label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
     }
 }
+
+Config.PreviewSpot2 = {
+    enabled = true,
+    coords = vector3(-181.5, -1289.33, 31.36),
+    
+    -- Cài đặt cho tương tác "Nhấn E"
+    interaction = {
+        radius = 3.0,
+        label = "Xem trước tùy chỉnh",
+        icon = "fas fa-eye",
+    },
+
+    -- Cài đặt cho Marker hiển thị trên mặt đất
+    marker = {
+        enabled = true,
+        drawDist = 20.0,
+        type = 23,
+        size = { x = 3.0, y = 3.0, z = 0.5 },
+        color = { r = 255, g = 0, b = 0, a = 100 },
+        zOffset = -0.35
+    },
+
+    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
+    blip = {
+        enabled = true, -- Đặt thành false để tắt blip
+        sprite = 67,    -- ID của icon blip (72 là icon của Benny's)
+        display = 4,    -- Cách hiển thị (4 là luôn luôn)
+        scale = 0.7,    -- Kích thước blip
+        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
+        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
+    }
+}
+
+Config.PreviewSpot3 = {
+    enabled = true,
+    coords = vector3(-1272.66, -3383.02, 14.54),
+    
+    -- Cài đặt cho tương tác "Nhấn E"
+    interaction = {
+        radius = 3.0,
+        label = "Xem trước tùy chỉnh",
+        icon = "fas fa-eye",
+    },
+
+    -- Cài đặt cho Marker hiển thị trên mặt đất
+    marker = {
+        enabled = true,
+        drawDist = 20.0,
+        type = 23,
+        size = { x = 6.0, y = 6.0, z = 0.5 },
+        color = { r = 255, g = 0, b = 0, a = 100 },
+        zOffset = -1.5
+    },
+
+    -- CÀI ĐẶT CHO BLIP TRÊN BẢN ĐỒ (Thêm mục này)
+    blip = {
+        enabled = true, -- Đặt thành false để tắt blip
+        sprite = 90,    -- ID của icon blip (72 là icon của Benny's)
+        display = 4,    -- Cách hiển thị (4 là luôn luôn)
+        scale = 0.7,    -- Kích thước blip
+        color = 46,     -- Màu của blip (46 là màu xanh lá cây nhạt)
+        label = "Điểm Xem Trước Xe" -- Tên hiển thị trên bản đồ
+    }
+}
