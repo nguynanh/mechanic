@@ -484,3 +484,73 @@ end)
 --    -- TÊN SỰ KIỆN NÀY PHẢI ĐÚNG
 --  --  TriggerClientEvent("qb-mechanicjob:client:Preview:Menu", source) 
 --end, "user")
+-- =================================================================
+-- LOGIC CHO TUNING TABLET - TÍCH HỢP TỪ DUSA_MECHANIC
+-- =================================================================
+
+-- Sự kiện nhận dữ liệu tuning từ client và lưu vào database
+RegisterNetEvent('qb-mechanicjob:server:saveVehicleTuning', function(plate, tuningData)
+    if not plate or not tuningData then return end
+    -- Cần có cột 'tuning' trong bảng 'player_vehicles'
+    -- Nếu chưa có, bạn cần chạy lệnh SQL: ALTER TABLE `player_vehicles` ADD COLUMN IF NOT EXISTS `tuning` LONGTEXT NULL DEFAULT NULL;
+    MySQL.Async.execute('UPDATE player_vehicles SET tuning = @tuning WHERE plate = @plate', {
+        ['@tuning'] = json.encode(tuningData),
+        ['@plate'] = plate
+    })
+end)
+
+-- Sự kiện đồng bộ màu đèn pha cho tất cả người chơi
+RegisterNetEvent('qb-mechanicjob:sv:syncHeadlight', function(vehicleNetId, r, g, b)
+    TriggerClientEvent('qb-mechanicjob:client:syncHeadlight', -1, vehicleNetId, r, g, b)
+end)
+
+-- Callback để client lấy dữ liệu tuning khi vào xe
+QBCore.Functions.CreateCallback('qb-mechanicjob:server:getVehicleTuning', function(source, cb, plate)
+    local result = MySQL.Sync.fetchAll('SELECT tuning FROM player_vehicles WHERE plate = ?', { plate })
+    if result and result[1] and result[1].tuning then
+        cb(json.decode(result[1].tuning))
+    else
+        cb(nil)
+    end
+end)
+
+-- Logic đăng ký vật phẩm hoặc lệnh để mở Tuning Tablet
+if Config.TuningAsItem then
+    QBCore.Functions.CreateUseableItem('tuningtablet', function(source)
+        local Player = QBCore.Functions.GetPlayer(source)
+        if not Player then return end
+        
+        -- Logic kiểm tra quyền đã được sửa
+        if not Config.RequireJob or (Player.PlayerData.job.name == 'mechanic' and Player.PlayerData.job.grade.level >= Config.MinimumGrade) then
+            -- Tên sự kiện đã được sửa thành qb-mechanicjob
+            TriggerClientEvent('qb-mechanicjob:client:useTuning', source)
+        else
+            TriggerClientEvent('QBCore:Notify', source, "Bạn không có quyền sử dụng vật phẩm này.", 'error', 5000)
+        end
+    end)
+else
+    QBCore.Commands.Add(Config.TuningCommand, 'Mở máy tính bảng tinh chỉnh xe', {}, false, function(source, args)
+        local Player = QBCore.Functions.GetPlayer(source)
+        if not Player then return end
+
+        -- Logic kiểm tra quyền đã được sửa
+        if not Config.RequireJob or (Player.PlayerData.job.name == 'mechanic' and Player.PlayerData.job.grade.level >= Config.MinimumGrade) then
+            -- Tên sự kiện đã được sửa thành qb-mechanicjob
+            TriggerClientEvent('qb-mechanicjob:client:useTuning', source)
+        else
+            TriggerClientEvent('QBCore:Notify', source, "Bạn không có quyền sử dụng lệnh này.", 'error', 5000)
+        end
+    end, 'user')
+end
+-- ... (rất nhiều code khác ở trên) ...
+
+else
+    QBCore.Commands.Add(Config.TuningCommand, 'Mở máy tính bảng tinh chỉnh xe', {}, false, function(source, args)
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player.PlayerData.job.name == 'mechanic' and Player.PlayerData.job.grade.level >= Config.MinimumGrade then 
+            TriggerClientEvent('dusa_mechanic:cl:useTuning', source) -- << Tên sự kiện này vẫn là của dusa_mechanic
+        else
+            TriggerClientEvent('QBCore:Notify', source, "Bạn không có quyền sử dụng lệnh này", 'error', 5000)
+        end
+    end, 'user')
+end

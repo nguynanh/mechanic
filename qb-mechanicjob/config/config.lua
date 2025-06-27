@@ -5,7 +5,14 @@ Config = {}
 ---------------------------------
 Config.FuelResource = 'LegacyFuel'
 Config.Debug = false
+--tuning
 
+Config.TuningAsItem = false -- true / false -- If its true, tuner tablet will be attached to tuningtablet item otherwise it will work with command 
+Config.TuningCommand = 'tuning'
+Config.MinimumGrade = 1 -- Define a min grade level for who can use 
+
+Config.IncreaseSpeed = 35.0
+Config.MaxSpeed = 999.0
 ---------------------------------
 -- CẤU HÌNH TÍNH NĂNG TỪ QB-MECHANICJOB GỐC
 ---------------------------------
